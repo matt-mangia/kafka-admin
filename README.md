@@ -240,6 +240,10 @@ From the project root directly, run the following:
 
 `mvn clean package`
 
-## Run the Jar, supplying your configuration as an option
+## Run the Jar, supplying your configuration with the "-config" or "-c" option to generate your topic & ACL plans
 
-`java -jar <path-to-jar> <path-config.yml>`
+`java -jar <path-to-jar> -config <path-config.yml>` 
+
+## Run the Jar, supplying your configuration as above & adding the "-execute" option to actually execute the plans
+
+`java -jar <path-to-jar> -config <path-config.yml> -execute`
