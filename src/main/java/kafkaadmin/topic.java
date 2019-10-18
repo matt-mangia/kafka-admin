@@ -48,6 +48,20 @@ class topic {
         }
     }
 
+    public static void increasePartitions(AdminClient client, JsonNode config, Set<String> topicList){
+        Map<String,NewPartitions> increasePartitionList = new HashMap<>();
+        for (String topic : topicList){
+            increasePartitionList.put(topic,NewPartitions.increaseTo(config.get("topics").get(topic).get("partitions").intValue()));
+        }
+
+        try {
+            final CreatePartitionsResult createPartitionsResult = client.createPartitions(increasePartitionList);
+            createPartitionsResult.all().get();
+        } catch (InterruptedException | ExecutionException e) {
+            System.out.println(e);
+        }
+    }
+
     public static void deleteTopics(AdminClient client, Collection<String> deleteList) {
         try {
             final DeleteTopicsResult deleteTopicsResult = client.deleteTopics(deleteList);
@@ -59,16 +73,30 @@ class topic {
 
     public static HashMap<String, Set<String>> prepareTopics(AdminClient client, JsonNode config) {
         try {
-            //Get Current Topics via AdminClient
+            //Get Current Topics & Partitions via AdminClient
             Set<String> currentTopics = client.listTopics().names().get();
+            HashMap<String,Integer> currentPartitions = new HashMap<>();
+            for (String topic : currentTopics) {
+                currentPartitions.put(topic, client.describeTopics(currentTopics).values().get(topic).get().partitions().size());
+            }
 
-            //Get configured topics + defaults
+            //Get configured topics & partitions
             Set<String> configuredTopics = new HashSet<>();
+            HashMap<String, Integer> configuredPartitions = new HashMap<>();
             for (JsonNode topic : config.get("topics")){
                 configuredTopics.add(topic.get("name").textValue());
+                configuredPartitions.put(topic.get("name").textValue(), topic.get("partitions").intValue());
             }
-            for (JsonNode topic : config.get("default_topics")){
-                configuredTopics.add(topic.textValue());
+
+            // Determine Partitions configured to be increased
+            // Keep the "current" topic/partitions that are in the configured list to be compared
+            currentPartitions.keySet().retainAll(configuredPartitions.keySet());
+            // Compare configured partitions vs "current" partitions and create modifyPartitions list
+            HashSet<String> increasePartitions = new HashSet<>();
+            for (Map.Entry current : currentPartitions.entrySet()){
+                if (configuredPartitions.get(current.getKey()).intValue() > Integer.valueOf(current.getValue().toString())){
+                    increasePartitions.add(current.getKey().toString());
+                }
             }
 
             //Determine topics to remove
@@ -82,6 +110,7 @@ class topic {
 
             HashMap<String,Set<String>> topicPlan = new HashMap<>();
             topicPlan.put("createTopicList", addTopics);
+            topicPlan.put("increasePartitionList", increasePartitions);
             //Commenting out deleteTopicList -- all topic deletion will be done manually
             //topicPlan.put("deleteTopicList", removeTopics);
 
