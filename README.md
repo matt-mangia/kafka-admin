@@ -51,6 +51,13 @@ default_topics:
 
 If you're not using delete topics, then you do not need to worry about using the "default_topics" section. 
 
+#### Increasing Topic Partitions
+
+For a topic that already exists on the cluster, you can increase the number of partitions that the topic has by updating the configuration for the topic under the "topics" section.
+You can only increase partitions -- **there is no ability to remove or reduce partitions.** 
+
+Note that at this time, no other topic configurations can be modified by updating the config file. 
+
 ### Add/Update/Remove ACLs
 
 In your `config.yml` file, update the section under "acls" with your complete list of acls as shown in the examples below:

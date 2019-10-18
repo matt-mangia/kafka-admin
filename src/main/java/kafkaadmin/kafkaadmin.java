@@ -53,9 +53,12 @@ class kafkaadmin {
         System.out.println(topicLists + "\n");
 
         if (executeFlag) {
-            //create & delete the topics according to the plan
+            //create,modify, & delete the topics according to the plan
             System.out.print("Creating topics...");
             topic.createTopics(client, config, topicLists.get("createTopicList"));
+            System.out.println("Done!");
+            System.out.print("Increasing partitions...");
+            topic.increasePartitions(client, config, topicLists.get("increasePartitionList"));
             System.out.println("Done!");
         }
         else {
