@@ -20,16 +20,30 @@ class topic {
         }
     }
 
+    private static HashMap<String,String> topicHeaderMap(JsonNode config) {
+        HashMap<String, String> topicHeaderMap = new HashMap<>();
+        JsonNode topicConfig = config.get("topics");
+        Iterator<String> iter = topicConfig.fieldNames();
+        while (iter.hasNext()) {
+            String header = iter.next();
+            topicHeaderMap.put(topicConfig.get(header).get("name").textValue(), header);
+        }
+        return topicHeaderMap;
+    }
+
     public static void createTopics(AdminClient client, JsonNode config, Set<String> topicList) {
         Collection<NewTopic> newTopicList = new ArrayList<>();
 
-        JsonNode topic = config.get("topics");
+        HashMap<String,String> topicHeaderMap = topicHeaderMap(config);
+        JsonNode topicConfigs = config.get("topics");
+
         for (String t : topicList) {
-            JsonNode topicConfigs = topic.get(t);
-            NewTopic newTopic = new NewTopic(topicConfigs.get("name").asText(), topicConfigs.get("partitions").asInt(), topicConfigs.get("replication.factor").shortValue());
+            String header = topicHeaderMap.get(t);
+            JsonNode topicConfig = topicConfigs.get(header);
+            NewTopic newTopic = new NewTopic(topicConfig.get("name").asText(), topicConfig.get("partitions").asInt(), topicConfig.get("replication.factor").shortValue());
 
             Map<String,String> customConfigs = new HashMap<>();
-            Iterator<Map.Entry<String,JsonNode>> iterator = topicConfigs.fields();
+            Iterator<Map.Entry<String,JsonNode>> iterator = topicConfig.fields();
             while (iterator.hasNext()) {
                 Map.Entry<String, JsonNode> configs = iterator.next();
                 if (!configs.getValue().isNull() && !configs.getKey().equals("name") && !configs.getKey().equals("partitions") && !configs.getKey().equals("replication.factor")) {
@@ -50,8 +64,10 @@ class topic {
 
     public static void increasePartitions(AdminClient client, JsonNode config, Set<String> topicList){
         Map<String,NewPartitions> increasePartitionList = new HashMap<>();
+        HashMap<String,String> topicHeaderMap = topicHeaderMap(config);
+
         for (String topic : topicList){
-            increasePartitionList.put(topic,NewPartitions.increaseTo(config.get("topics").get(topic).get("partitions").intValue()));
+            increasePartitionList.put(topic,NewPartitions.increaseTo(config.get("topics").get(topicHeaderMap.get(topic)).get("partitions").intValue()));
         }
 
         try {

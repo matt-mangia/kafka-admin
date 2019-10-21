@@ -35,11 +35,12 @@ topics:
     replication.factor: 1
     partitions: 3
     cleanup.policy: 
-    compression.type:
-    retention.ms:
+    compression.type: "lz4"
+    retention.ms: "0"
 ```
 
 You can choose to leave the additional configurations for a topic blank (and defaults will be used), or you can enter them as well under the desired topic. 
+It is important to note that the **additional configuration values must be entered as strings (wrapped in double quotes)** or they will cause an error to the application. 
 
 If you are you using delete topics (default is disabled), you will need to make sure all topics that exist on the cluster are in your "topics" section or exist in the "default_topics" section, as shown here:
 
