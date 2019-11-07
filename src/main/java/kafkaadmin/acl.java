@@ -48,17 +48,23 @@ class acl {
             Collection<AclBinding> configuredAcls = new ArrayList<>();
 
             for (JsonNode acl : config.get("acls")) {
-                ResourceType resType = ResourceType.fromString(acl.get("resource-type").textValue());
-                PatternType patType = PatternType.fromString(acl.get("resource-pattern").textValue());
-                ResourcePattern resourcePattern = new ResourcePattern(resType,acl.get("resource-name").textValue(),patType);
+                for (String principal : acl.get("principal").textValue().split(",")) {
+                    for (String operation : acl.get("operation").textValue().split(",")) {
+                        for (String resourcename : acl.get("resource-name").textValue().split(",")) {
+                            ResourceType resType = ResourceType.fromString(acl.get("resource-type").textValue());
+                            PatternType patType = PatternType.fromString(acl.get("resource-pattern").textValue());
+                            ResourcePattern resourcePattern = new ResourcePattern(resType, resourcename.trim(), patType);
 
-                AclOperation aclOp = AclOperation.fromString(acl.get("operation").textValue());
-                AclPermissionType aclPerm = AclPermissionType.fromString(acl.get("permission").textValue());
+                            AclOperation aclOp = AclOperation.fromString(operation.trim());
+                            AclPermissionType aclPerm = AclPermissionType.fromString(acl.get("permission").textValue());
 
-                AccessControlEntry accessControlEntry = new AccessControlEntry(acl.get("principal").textValue(), acl.get("host").textValue(), aclOp, aclPerm);
+                            AccessControlEntry accessControlEntry = new AccessControlEntry(principal.trim(), acl.get("host").textValue(), aclOp, aclPerm);
 
-                AclBinding aclBinding = new AclBinding(resourcePattern,accessControlEntry);
-                configuredAcls.add(aclBinding);
+                            AclBinding aclBinding = new AclBinding(resourcePattern, accessControlEntry);
+                            configuredAcls.add(aclBinding);
+                        }
+                    }
+                }
             }
 
             //Determine acls to remove
