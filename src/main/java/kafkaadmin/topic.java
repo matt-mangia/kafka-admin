@@ -103,10 +103,11 @@ class topic {
             for (String topic : currentTopics) {
                 currentPartitions.put(topic, client.describeTopics(currentTopics).values().get(topic).get().partitions().size());
             }
+
             //Get configured topics & partitions
             Set<String> configuredTopics = new HashSet<>();
             HashMap<String, Integer> configuredPartitions = new HashMap<>();
-            for (JsonNode topic : config.get("topics")) {
+            for (JsonNode topic : config.get("topics")){
                 configuredTopics.add(topic.get("name").textValue());
                 configuredPartitions.put(topic.get("name").textValue(), topic.get("partitions").intValue());
             }
@@ -116,8 +117,8 @@ class topic {
             currentPartitions.keySet().retainAll(configuredPartitions.keySet());
             // Compare configured partitions vs "current" partitions and create modifyPartitions list
             HashSet<String> increasePartitions = new HashSet<>();
-            for (Map.Entry current : currentPartitions.entrySet()) {
-                if (configuredPartitions.get(current.getKey()).intValue() > Integer.valueOf(current.getValue().toString())) {
+            for (Map.Entry current : currentPartitions.entrySet()){
+                if (configuredPartitions.get(current.getKey()).intValue() > Integer.valueOf(current.getValue().toString())){
                     increasePartitions.add(current.getKey().toString());
                 }
             }
@@ -131,11 +132,12 @@ class topic {
             Set<String> addTopics = new HashSet<>(configuredTopics);
             addTopics.removeAll(currentTopics);
 
-            HashMap<String, Set<String>> topicPlan = new HashMap<>();
+            HashMap<String,Set<String>> topicPlan = new HashMap<>();
             topicPlan.put("createTopicList", addTopics);
             topicPlan.put("increasePartitionList", increasePartitions);
             //Commenting out deleteTopicList -- all topic deletion will be done manually
             //topicPlan.put("deleteTopicList", removeTopics);
+
             return topicPlan;
         } catch (InterruptedException | ExecutionException e) {
             System.out.println(e);

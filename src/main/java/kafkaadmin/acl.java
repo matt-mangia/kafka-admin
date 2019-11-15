@@ -51,6 +51,7 @@ class acl {
             }
             //Get current ACLs
             Collection<AclBinding> currentAcls = client.describeAcls(AclBindingFilter.ANY).values().get();
+
             //Get configured ACLs
             Collection<AclBinding> configuredAcls = new ArrayList<>();
 
@@ -82,11 +83,12 @@ class acl {
             Collection<AclBinding> addAcls = new ArrayList<>(configuredAcls);
             addAcls.removeAll(currentAcls);
 
-            HashMap<String, Collection<AclBinding>> aclPlan = new HashMap<>();
+            HashMap<String,Collection<AclBinding>> aclPlan = new HashMap<>();
             aclPlan.put("createAclList", addAcls);
             aclPlan.put("deleteAclList", removeAcls);
 
             return aclPlan;
+
         } catch (InterruptedException | ExecutionException e) {
             System.out.println(e);
             return null;
