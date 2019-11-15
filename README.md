@@ -242,6 +242,25 @@ For a list of all operations & resources, see this [link](https://docs.confluent
 **Note that all fields are required for ACLs (unlike topics) in your config.yml file. 
 Any ACLs that are not included in your list but that exist on the Kafka cluster will be removed when the application is run.** 
 
+#### Adding multiple acls with a single acl configuration block:
+
+You can add multiple acls using the same configuration block under acls. 
+These can be easily grouped together into a project heading. 
+
+Example -- The following block will create acls that give 'READ' and 'WRITE' to Matt, Brien, Aleks, Vedanta, and Liying for topics 'matt-topic-A','brien-topic', and 'third-topic':
+
+```
+acls:
+  project-1:
+    resource-type: topic
+    resource-name: matt-topic-A, brien-topic, third-topic
+    resource-pattern: LITERAL
+    principal: User:Matt, User:Brien, User:Aleks, User:Vedanta,User:Liying
+    operation: READ, WRITE
+    permission: ALLOW
+    host: '*'
+```
+
 ## Build the application jar file
 
 From the project root directly, run the following:
