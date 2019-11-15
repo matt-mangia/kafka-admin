@@ -1,11 +1,12 @@
 package kafkaadmin;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import com.fasterxml.jackson.dataformat.yaml.YAMLGenerator;
 import org.apache.kafka.clients.admin.*;
-import org.apache.kafka.common.TopicPartitionInfo;
 import org.apache.kafka.common.config.ConfigResource;
-import org.yaml.snakeyaml.DumperOptions;
-import org.yaml.snakeyaml.Yaml;
 
 import java.util.*;
 import java.util.concurrent.ExecutionException;
@@ -175,12 +176,19 @@ class topic {
         }
     }
     public static String topicsToYAML (HashMap<String, HashMap<String,Object>> currentTopics) {
-        DumperOptions options = new DumperOptions();
-        options.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
         HashMap<String, HashMap<String, HashMap<String,Object>>> topicsDump = new HashMap<>();
         topicsDump.put("topics", currentTopics);
-        options.setPrettyFlow(true);
-        Yaml yaml = new Yaml(options);
-        return yaml.dump(topicsDump);
+        YAMLFactory yFact = new YAMLFactory();
+        yFact.configure(YAMLGenerator.Feature.MINIMIZE_QUOTES,true);
+        yFact.configure(YAMLGenerator.Feature.WRITE_DOC_START_MARKER,false);
+        ObjectMapper mapper = new ObjectMapper(yFact);
+        String yamlString = null;
+        try {
+            yamlString = mapper.writeValueAsString(topicsDump);
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+            // TODO: some handling
+        }
+        return yamlString;
     }
 }

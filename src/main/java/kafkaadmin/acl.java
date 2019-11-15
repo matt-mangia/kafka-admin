@@ -1,6 +1,10 @@
 package kafkaadmin;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import com.fasterxml.jackson.dataformat.yaml.YAMLGenerator;
 import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.kafka.clients.admin.CreateAclsResult;
 import org.apache.kafka.clients.admin.DeleteAclsResult;
@@ -9,10 +13,11 @@ import org.apache.kafka.common.resource.PatternType;
 import org.apache.kafka.common.resource.ResourcePattern;
 import org.apache.kafka.common.resource.ResourceType;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.concurrent.ExecutionException;
-import org.yaml.snakeyaml.DumperOptions;
-import org.yaml.snakeyaml.Yaml;
 
 class acl {
 
@@ -114,10 +119,17 @@ class acl {
             aclItem.put("Acl-"+counter++,aclConfig);
         }
         aclMap.put("acls",aclItem);
-        DumperOptions options = new DumperOptions();
-        options.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
-        options.setPrettyFlow(true);
-        Yaml yaml = new Yaml(options);
-        return yaml.dump(aclMap);
+        YAMLFactory yFact = new YAMLFactory();
+        yFact.configure(YAMLGenerator.Feature.MINIMIZE_QUOTES,true);
+        yFact.configure(YAMLGenerator.Feature.WRITE_DOC_START_MARKER,false);
+        ObjectMapper mapper = new ObjectMapper(yFact);
+        String yamlString = null;
+        try {
+            yamlString = mapper.writeValueAsString(aclMap);
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+            // TODO: some handling
+        }
+        return yamlString;
     }
 }
