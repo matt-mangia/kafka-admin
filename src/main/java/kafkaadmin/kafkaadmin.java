@@ -66,6 +66,7 @@ class kafkaadmin {
         } catch (FileNotFoundException e) {
             e.printStackTrace();
             System.err.println("Error opening output file.");
+            System.exit(1);
         }
 
         // read connection properties
@@ -97,22 +98,22 @@ class kafkaadmin {
 
         //prepare topic lists & print topic plan here
         HashMap<String, Set<String>> topicLists = topic.prepareTopics(client,config);
-        System.err.println("\n----- Topic Plan -----");
-        System.err.println(topicLists + "\n");
+        System.out.println("\n----- Topic Plan -----");
+        System.out.println(topicLists + "\n");
 
         if (executeFlag) {
             //create,modify, & delete the topics according to the plan
-            System.err.print("Creating topics...");
+            System.out.print("Creating topics...");
             topic.createTopics(client, config, topicLists.get("createTopicList"));
-            System.err.println("Done!");
-            System.err.print("Increasing partitions...");
+            System.out.println("Done!");
+            System.out.print("Increasing partitions...");
             topic.increasePartitions(client, config, topicLists.get("increasePartitionList"));
-            System.err.println("Done!");
+            System.out.println("Done!");
         }
         else {
-            System.err.println("Skipping create topics...use \"-execute\" to create topics from the plan.");
+            System.out.println("Skipping create topics...use \"-execute\" to create topics from the plan.");
         }
-        System.err.println("----------------------");
+        System.out.println("----------------------");
 
 
         //Commenting out deletion of topics -- to be done manually
@@ -120,22 +121,22 @@ class kafkaadmin {
 
         //prepare acl lists & print acl plan here
         HashMap<String, Collection<AclBinding>> aclLists = acl.prepareAcls(client,config);
-        System.err.println("\n----- ACL Plan -----");
-        System.err.println(aclLists + "\n");
+        System.out.println("\n----- ACL Plan -----");
+        System.out.println(aclLists + "\n");
 
         //create & delete the acls according to the plan
         if (executeFlag) {
-            System.err.print("Deleting ACLs...");
+            System.out.print("Deleting ACLs...");
             acl.deleteAcls(client, aclLists.get("deleteAclList"));
-            System.err.println("Done!");
+            System.out.println("Done!");
 
-            System.err.print("Creating ACLs...");
+            System.out.print("Creating ACLs...");
             acl.createAcls(client, aclLists.get("createAclList"));
-            System.err.println("Done!");
+            System.out.println("Done!");
         }
         else {
-            System.err.println("Skipping create & delete ACLs...use \"-execute\" to create or delete ACLs from the plan.");
+            System.out.println("Skipping create & delete ACLs...use \"-execute\" to create or delete ACLs from the plan.");
         }
-        System.err.println("----------------------");
+        System.out.println("----------------------");
     }
 }
