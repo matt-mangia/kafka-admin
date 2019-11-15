@@ -1,123 +1,45 @@
+cluster:
+  bootstrap.servers: localhost:9092
+  security.protocol:
+  sasl.jaas.config:
+  sasl.mechanism:
+  ssl.truststore.location:
+  ssl.truststore.password:
+  ssl.keystore.location:
+  ssl.keystore.password:
+  ssl.key.password:
+
+topics:
+  matt-topic-A:
+    name: matt-topic-A
+    replication.factor: 1
+    partitions: 3
+    cleanup.policy:
+    compression.type:
+    retention.ms:
+  matt-topic-D:
+    name: matt-topic-D
+    replication.factor: 1
+    partitions: 3
+
 default_topics:
   - _confluent-metrics
   - __confluent.support.metrics
 
-topics:
-  PAYM:
-    name: PAYM
-    partitions: 9
-    replication.factor: 3
-    compression.type: snappy
-    min.insync.replicas: '2'
-    segment.bytes: '1073741824'
-  ACTIVATE:
-    name: ACTIVATE
-    partitions: 9
-    replication.factor: 3
-    compression.type: snappy
-    min.insync.replicas: '2'
-    segment.bytes: '1073741824'
-  CLIP:
-    name: CLIP
-    partitions: 18
-    replication.factor: 2
-    min.insync.replicas: '2'
-    segment.bytes: '1073741824'
-
 acls:
-  Acl-1:
-    principal: User:test
-    resource-pattern: PREFIXED
-    host: '*'
-    resource-type: TOPIC
-    resource-name: ACTIVATE
+  project-1:
+    resource-type: topic
+    resource-name: matt-topic-A
+    resource-pattern: LITERAL
+    principal: User:*
+    operation: ALL
     permission: ALLOW
-    operation: READ
-  Acl-2:
-    principal: User:test
-    resource-pattern: PREFIXED
     host: '*'
-    resource-type: TOPIC
-    resource-name: ACTIVATE
+  project-2:
+    resource-type: topic
+    resource-name: matt-topic-B
+    resource-pattern: LITERAL
+    principal: User:*
+    operation: ALL
     permission: ALLOW
-    operation: DESCRIBE
-  Acl-3:
-    principal: User:test
-    resource-pattern: PREFIXED
     host: '*'
-    resource-type: TOPIC
-    resource-name: PAYM
-    permission: ALLOW
-    operation: WRITE
-  Acl-4:
-    principal: User:test
-    resource-pattern: PREFIXED
-    host: '*'
-    resource-type: TOPIC
-    resource-name: PAYM
-    permission: ALLOW
-    operation: CREATE
-  Acl-5:
-    principal: User:test
-    resource-pattern: PREFIXED
-    host: '*'
-    resource-type: TOPIC
-    resource-name: PAYM
-    permission: ALLOW
-    operation: DESCRIBE
-  Acl-6:
-    principal: User:zk2.ivan.confluent.nerdynick.net
-    resource-pattern: PREFIXED
-    host: '*'
-    resource-type: TOPIC
-    resource-name: PAYM
-    permission: ALLOW
-    operation: READ
-  Acl-7:
-    principal: User:test
-    resource-pattern: PREFIXED
-    host: '*'
-    resource-type: TOPIC
-    resource-name: PAYM
-    permission: ALLOW
-    operation: READ
-  Acl-8:
-    principal: User:zk2.ivan.confluent.nerdynick.net
-    resource-pattern: PREFIXED
-    host: '*'
-    resource-type: TOPIC
-    resource-name: PAYM
-    permission: ALLOW
-    operation: DESCRIBE
-  Acl-9:
-    principal: User:zk2.ivan.confluent.nerdynick.net
-    resource-pattern: PREFIXED
-    host: '*'
-    resource-type: TOPIC
-    resource-name: test
-    permission: ALLOW
-    operation: READ
-  Acl-10:
-    principal: User:zk2.ivan.confluent.nerdynick.net
-    resource-pattern: PREFIXED
-    host: '*'
-    resource-type: TOPIC
-    resource-name: test
-    permission: ALLOW
-    operation: DESCRIBE
-  Acl-11:
-    principal: User:test
-    resource-pattern: PREFIXED
-    host: '*'
-    resource-type: GROUP
-    resource-name: test
-    permission: ALLOW
-    operation: READ
-  Acl-12:
-    principal: User:zk2.ivan.confluent.nerdynick.net
-    resource-pattern: PREFIXED
-    host: '*'
-    resource-type: GROUP
-    resource-name: test
-    permission: ALLOW
-    operation: READ
