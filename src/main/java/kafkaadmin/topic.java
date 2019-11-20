@@ -52,7 +52,7 @@ class topic {
             while (iterator.hasNext()) {
                 Map.Entry<String, JsonNode> configs = iterator.next();
                 if (!configs.getValue().isNull() && !configs.getKey().equals("name") && !configs.getKey().equals("partitions") && !configs.getKey().equals("replication.factor")) {
-                    customConfigs.put(configs.getKey(), configs.getValue().textValue());
+                    customConfigs.put(configs.getKey(), configs.getValue().asText());
                 }
             }
             newTopic.configs(customConfigs);
