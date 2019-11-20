@@ -282,3 +282,7 @@ From the project root directly, run the following:
 
 `java -jar <path-to-jar>  -properties <path.properties> -dump -output <path-output.yml>`
 
+alternatively run the following to output the dump to stdout
+
+`java -jar <path-to-jar>  -properties <path.properties> -dump`
+ 
