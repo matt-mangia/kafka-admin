@@ -14,7 +14,7 @@ class kafkaadmin {
 
     public static void main(String[] args) {
         String configFilepath = "", propsFilepath = "";
-        boolean executeFlag = false, readFlag = false, internalFlag = false;
+        boolean executeFlag = false, dumpFlag = false, internalFlag = false;
         PrintStream configFile = System.out;
 
         CommandLine commandLine;
@@ -50,7 +50,7 @@ class kafkaadmin {
                     if (commandLine.hasOption("config")) {
                         throw(new ParseException("Cannot use -config (-c) option for the dump operation"));
                     }
-                    readFlag = true;
+                    dumpFlag = true;
                     if (commandLine.hasOption("output"))
                         configFile = new PrintStream(commandLine.getOptionValue("output"));
                 }
@@ -81,7 +81,7 @@ class kafkaadmin {
         // Create our AdminClient using properties from our config file
         AdminClient client = AdminClient.create(props);
 
-        if (readFlag){
+        if (dumpFlag){
             // only read and dump current config and exit
             System.err.println("Existing topics...");
             HashMap<String, HashMap<String, Object>> allTopics = topic.getTopics(client, internalFlag);

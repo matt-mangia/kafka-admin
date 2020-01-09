@@ -1,0 +1,8 @@
+bootstrap.servers: ikafka:9092
+security.protocol: SSL
+ssl.truststore.location: client.truststore.jks
+ssl.truststore.password: password
+ssl.keystore.location: client.keystore.jks
+ssl.keystore.password: password
+ssl.key.password: password
+
