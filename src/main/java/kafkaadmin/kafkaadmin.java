@@ -99,14 +99,19 @@ class kafkaadmin {
         //prepare topic lists & print topic plan here
         HashMap<String, Set<String>> topicLists = topic.prepareTopics(client,config);
         System.out.println("\n----- Topic Plan -----");
-        System.out.println(topicLists + "\n");
+        for ( String key : topicLists.keySet()){
+            System.out.println("\n" + key + ":");
+            for (String value : topicLists.get(key)){
+                System.out.println(value);
+            }
+        }
 
         if (executeFlag) {
             //create,modify, & delete the topics according to the plan
-            System.out.print("Creating topics...");
+            System.out.print("\nCreating topics...");
             topic.createTopics(client, config, topicLists.get("createTopicList"));
             System.out.println("Done!");
-            System.out.print("Increasing partitions...");
+            System.out.print("\nIncreasing partitions...");
             topic.increasePartitions(client, config, topicLists.get("increasePartitionList"));
             System.out.println("Done!");
         }
@@ -122,15 +127,20 @@ class kafkaadmin {
         //prepare acl lists & print acl plan here
         HashMap<String, Collection<AclBinding>> aclLists = acl.prepareAcls(client,config);
         System.out.println("\n----- ACL Plan -----");
-        System.out.println(aclLists + "\n");
+        for ( String key : aclLists.keySet()){
+            System.out.println("\n" + key + ":");
+            for (AclBinding value : aclLists.get(key)){
+                System.out.println(value);
+            }
+        }
 
         //create & delete the acls according to the plan
         if (executeFlag) {
-            System.out.print("Deleting ACLs...");
+            System.out.print("\nDeleting ACLs...");
             acl.deleteAcls(client, aclLists.get("deleteAclList"));
             System.out.println("Done!");
 
-            System.out.print("Creating ACLs...");
+            System.out.print("\nCreating ACLs...");
             acl.createAcls(client, aclLists.get("createAclList"));
             System.out.println("Done!");
         }
