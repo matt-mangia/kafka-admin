@@ -6,10 +6,11 @@
 [Run the Jar](#run-the-jar-supplying-your-configuration-as-an-option)  
 
 ## Update your configuration file
+You can use the supplied `kafka-admin.properties.example` as a base. Update and rename to `kafka-admin.properties`.
 
 ### Add Cluster Configuration
 
-In your `server.properties` file, add your cluster configuration as shown here:
+In your `kafka-admin.properties` file, add your cluster configuration as shown here:
 
 ```
 bootstrap.servers: pkc-l7p2j.us-west-2.aws.confluent.cloud:9092
