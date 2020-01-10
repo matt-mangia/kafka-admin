@@ -1,7 +1,12 @@
 package kafkaadmin;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import com.fasterxml.jackson.dataformat.yaml.YAMLGenerator;
 import org.apache.kafka.clients.admin.*;
+import org.apache.kafka.common.config.ConfigResource;
 
 import java.util.*;
 import java.util.concurrent.ExecutionException;
@@ -47,7 +52,7 @@ class topic {
             while (iterator.hasNext()) {
                 Map.Entry<String, JsonNode> configs = iterator.next();
                 if (!configs.getValue().isNull() && !configs.getKey().equals("name") && !configs.getKey().equals("partitions") && !configs.getKey().equals("replication.factor")) {
-                    customConfigs.put(configs.getKey(), configs.getValue().textValue());
+                    customConfigs.put(configs.getKey(), configs.getValue().asText());
                 }
             }
             newTopic.configs(customConfigs);
@@ -89,6 +94,9 @@ class topic {
 
     public static HashMap<String, Set<String>> prepareTopics(AdminClient client, JsonNode config) {
         try {
+            if (!config.hasNonNull("topics")) {
+                return null;
+            }
             //Get Current Topics & Partitions via AdminClient
             Set<String> currentTopics = client.listTopics().names().get();
             HashMap<String,Integer> currentPartitions = new HashMap<>();
@@ -131,10 +139,58 @@ class topic {
             //topicPlan.put("deleteTopicList", removeTopics);
 
             return topicPlan;
-
         } catch (InterruptedException | ExecutionException e) {
             System.out.println(e);
             return null;
         }
+    }
+
+    public static HashMap<String, HashMap<String,Object>> getTopics(AdminClient client, Boolean isInternal) {
+        try {
+            //Get Current Topics & Partitions via AdminClient
+            HashMap<String, HashMap<String,Object>> currentTopics = new HashMap<>();
+            ListTopicsOptions options = new ListTopicsOptions();
+            options.listInternal(isInternal);
+            Set<String> topicList = client.listTopics(options).names().get();
+            DescribeTopicsResult topicsInfo = client.describeTopics(topicList);
+            for (String topicInfo : topicList) {
+                // ignore all "internal" topics unless forced
+                if (isInternal || !topicInfo.startsWith("_")) {
+                    LinkedHashMap<String, Object> currentInfo = new LinkedHashMap<>();
+                    currentInfo.put("name", topicInfo);
+                    currentInfo.put("partitions", topicsInfo.values().get(topicInfo).get().partitions().size());
+                    currentInfo.put("replication.factor", topicsInfo.values().get(topicInfo).get().partitions().get(0).replicas().size());
+                    Collection<ConfigResource> cr = Collections.singleton(new ConfigResource(ConfigResource.Type.TOPIC, topicInfo));
+                    DescribeConfigsResult ConfigsResult = client.describeConfigs(cr);
+                    Config all_configs = (Config) ConfigsResult.all().get().values().toArray()[0];
+                    for (ConfigEntry currentConfig : all_configs.entries()) {
+                        if (!currentConfig.isDefault() && !currentConfig.isReadOnly()) {
+                            currentInfo.put(currentConfig.name(), currentConfig.value());
+                        }
+                    }
+                    currentTopics.put(topicInfo, currentInfo);
+                }
+            }
+            return currentTopics;
+        } catch (InterruptedException | ExecutionException e) {
+            System.out.println(e);
+            return null;
+        }
+    }
+    public static String topicsToYAML (HashMap<String, HashMap<String,Object>> currentTopics) {
+        HashMap<String, HashMap<String, HashMap<String,Object>>> topicsDump = new HashMap<>();
+        topicsDump.put("topics", currentTopics);
+        YAMLFactory yFact = new YAMLFactory();
+        yFact.configure(YAMLGenerator.Feature.MINIMIZE_QUOTES,true);
+        yFact.configure(YAMLGenerator.Feature.WRITE_DOC_START_MARKER,false);
+        ObjectMapper mapper = new ObjectMapper(yFact);
+        String yamlString = null;
+        try {
+            yamlString = mapper.writeValueAsString(topicsDump);
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+            // TODO: some handling
+        }
+        return yamlString;
     }
 }

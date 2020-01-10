@@ -1,6 +1,10 @@
 package kafkaadmin;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import com.fasterxml.jackson.dataformat.yaml.YAMLGenerator;
 import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.kafka.clients.admin.CreateAclsResult;
 import org.apache.kafka.clients.admin.DeleteAclsResult;
@@ -12,6 +16,7 @@ import org.apache.kafka.common.resource.ResourceType;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.concurrent.ExecutionException;
 
 class acl {
@@ -41,6 +46,9 @@ class acl {
 
     public static HashMap<String, Collection<AclBinding>> prepareAcls(AdminClient client, JsonNode config) {
         try {
+            if (!config.hasNonNull("acls")) {
+                return null;
+            }
             //Get current ACLs
             Collection<AclBinding> currentAcls = client.describeAcls(AclBindingFilter.ANY).values().get();
 
@@ -85,5 +93,45 @@ class acl {
             System.out.println(e);
             return null;
         }
+    }
+    public static Collection<AclBinding> getAcls(AdminClient client) {
+        try {
+            //Get current ACLs
+            return client.describeAcls(AclBindingFilter.ANY).values().get();
+        } catch (InterruptedException | ExecutionException e) {
+            System.out.println(e);
+            return null;
+        }
+    }
+
+    public static String aclsToYAML(Collection<AclBinding> currentAcls) {
+        //Get current ACLs into a map then format as YAML
+        HashMap<String, HashMap<String, HashMap<String,String>>> aclMap = new HashMap<>();
+        LinkedHashMap<String, HashMap<String,String>> aclItem = new LinkedHashMap<>();
+        int counter = 1;
+        for(AclBinding k : currentAcls) {
+            HashMap<String, String> aclConfig = new HashMap<>();
+            aclConfig.put("resource-type", k.pattern().resourceType().name());
+            aclConfig.put("resource-name", k.pattern().name());
+            aclConfig.put("resource-pattern", k.pattern().patternType().name());
+            aclConfig.put("principal", k.entry().principal());
+            aclConfig.put("host", k.entry().host());
+            aclConfig.put("operation", k.entry().operation().name());
+            aclConfig.put("permission", k.entry().permissionType().name());
+            aclItem.put("Acl-"+counter++,aclConfig);
+        }
+        aclMap.put("acls",aclItem);
+        YAMLFactory yFact = new YAMLFactory();
+        yFact.configure(YAMLGenerator.Feature.MINIMIZE_QUOTES,true);
+        yFact.configure(YAMLGenerator.Feature.WRITE_DOC_START_MARKER,false);
+        ObjectMapper mapper = new ObjectMapper(yFact);
+        String yamlString = null;
+        try {
+            yamlString = mapper.writeValueAsString(aclMap);
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+            // TODO: some handling
+        }
+        return yamlString;
     }
 }

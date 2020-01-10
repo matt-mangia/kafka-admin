@@ -6,18 +6,18 @@
 [Run the Jar](#run-the-jar-supplying-your-configuration-as-an-option)  
 
 ## Update your configuration file
+You can use the supplied `kafka-admin.properties.example` as a base. Update and rename to `kafka-admin.properties`.
 
 ### Add Cluster Configuration
 
-In your config.yml file, add your cluster configuration as shown here:
+In your `kafka-admin.properties` file, add your cluster configuration as shown here:
 
 ```
-cluster:
-  bootstrap.servers: pkc-l7p2j.us-west-2.aws.confluent.cloud:9092
-  security.protocol: SASL_SSL
-  sasl.jaas.config: org.apache.kafka.common.security.plain.PlainLoginModule required username="<API-KEY>" password="<API-SECRET>";
-  sasl.mechanism: PLAIN
-  ssl.endpoint.identification.algorithm: https
+bootstrap.servers: pkc-l7p2j.us-west-2.aws.confluent.cloud:9092
+security.protocol: SASL_SSL
+sasl.jaas.config: org.apache.kafka.common.security.plain.PlainLoginModule required username="<API-KEY>" password="<API-SECRET>";
+sasl.mechanism: PLAIN
+ssl.endpoint.identification.algorithm: https
 ```
 
 Any cluster connection configuration properties may be specified here, just make sure they align to the actual Kafka client properties exactly. 
@@ -267,10 +267,23 @@ From the project root directly, run the following:
 
 `mvn clean package`
 
-## Run the Jar, supplying your configuration with the "-config" or "-c" option to generate your topic & ACL plans
+## Run the Jar, supplying your configuration with the "-properties" or "-p" and -config" or "-c" options to generate your topic & ACL plans
 
-`java -jar <path-to-jar> -config <path-config.yml>` 
+`java -jar <path-to-jar> -properties <path.properties> -config <path-config.yml>` 
 
 ## Run the Jar, supplying your configuration as above & adding the "-execute" option to actually execute the plans
 
-`java -jar <path-to-jar> -config <path-config.yml> -execute`
+`java -jar <path-to-jar>  -properties <path.properties> -config <path-config.yml> -execute`
+
+## Run the Jar, supplying your connection configuration with the "-properties" or "-p" and "-dump" options to print out current topic/ACLs configuration to stdout
+
+`java -jar <path-to-jar>  -properties <path.properties> -dump`
+
+## Run the Jar, supplying your connection configuration with the "-properties" or "-p", "-dump" and "-output" or "-o" options to print out current topic/ACLs configuration to a file
+
+`java -jar <path-to-jar>  -properties <path.properties> -dump -output <path-output.yml>`
+
+alternatively run the following to output the dump to stdout
+
+`java -jar <path-to-jar>  -properties <path.properties> -dump`
+ 
