@@ -1,26 +1,13 @@
-cluster:
-  bootstrap.servers: localhost:9092
-  security.protocol:
-  sasl.jaas.config:
-  sasl.mechanism:
-  ssl.truststore.location:
-  ssl.truststore.password:
-  ssl.keystore.location:
-  ssl.keystore.password:
-  ssl.key.password:
-
 topics:
-  matt-topic-A:
+  topic-1:
     name: matt-topic-A
     replication.factor: 1
     partitions: 3
-    cleanup.policy:
-    compression.type:
-    retention.ms:
-  matt-topic-D:
-    name: matt-topic-D
+  project-2-topic:
+    name: matt-topic-C
     replication.factor: 1
-    partitions: 3
+    partitions: 5
+    retention.ms:
 
 default_topics:
   - _confluent-metrics
@@ -29,15 +16,15 @@ default_topics:
 acls:
   project-1:
     resource-type: topic
-    resource-name: matt-topic-A
+    resource-name: matt-topic-A, matt-topic-C, matt-topic-D, matt-topic-S
     resource-pattern: LITERAL
-    principal: User:*
-    operation: ALL
+    principal: User:Matt, User:Brien, User:Kevin, User:Aleks, User:Vedanta,User:Liying
+    operation: ALL, READ, WRITE
     permission: ALLOW
     host: '*'
-  project-2:
+  project-1-2:
     resource-type: topic
-    resource-name: matt-topic-B
+    resource-name: matt-topic-
     resource-pattern: LITERAL
     principal: User:*
     operation: ALL
