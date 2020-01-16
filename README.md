@@ -7,10 +7,11 @@
 
 ## Update your configuration files
 You can use the supplied `kafka-admin.properties.example` as a base. Update and rename to `kafka-admin.properties`.
+Alternatively, you can use this application to pull the topic & ACL configurations from an existing cluster. 
 
-### Add Cluster Configuration
+### Add Cluster Connection Configuration
 
-In your `kafka-admin.properties` file, add your cluster configuration as shown here:
+In your `kafka-admin.properties` file, add your cluster connection configuration as shown here:
 
 ```
 bootstrap.servers: pkc-l7p2j.us-west-2.aws.confluent.cloud:9092
@@ -20,8 +21,8 @@ sasl.mechanism: PLAIN
 ssl.endpoint.identification.algorithm: https
 ```
 
-Any cluster connection configuration properties may be specified here, just make sure they align to the actual Kafka client properties exactly. 
-For example, you can add "ssl.enabled.mechanisms". 
+Any cluster connection connection properties may be specified here, just make sure they align to the actual Kafka client properties exactly. 
+For example, you can add `ssl.enabled.mechanisms`. 
 Any properties that are not specified or are left with a blank value will use the default values. 
 
 ### Add/Update Topics
@@ -269,23 +270,26 @@ From the project root directly, run the following:
 
 ## Run the Jar
 
-### Supply your configuration with the "-properties" or "-p" and -config" or "-c" options to generate your topic & ACL plans
+### Pull the configured topics & ACLs from a cluster **and print to stdout**
 
-`java -jar <path-to-jar> -properties <path.properties> -config <path-config.yml>` 
-
-### Supply your configuration as above & adding the "-execute" option to actually execute the plans
-
-`java -jar <path-to-jar>  -properties <path.properties> -config <path-config.yml> -execute`
-
-### Supply your connection configuration with the "-properties" or "-p" and "-dump" options to print out current topic/ACLs configuration to stdout
+Supply your connection configuration with the "-properties" or "-p" and "-dump" options to print out current topic/ACLs configuration to stdout
 
 `java -jar <path-to-jar>  -properties <path.properties> -dump`
 
-### Supply your connection configuration with the "-properties" or "-p", "-dump" and "-output" or "-o" options to print out current topic/ACLs configuration to a file
+### Pull the configured topics & ACLs from a cluster **and write to an output file**
+
+Supply your connection configuration with the "-properties" or "-p", "-dump" and "-output" or "-o" options to print out current topic/ACLs configuration to a file
 
 `java -jar <path-to-jar>  -properties <path.properties> -dump -output <path-output.yml>`
 
-Alternatively run the following to output the dump to stdout
+### Generate a Topic & ACL Plan but **do not** apply any changes
 
-`java -jar <path-to-jar>  -properties <path.properties> -dump`
- 
+Supply your connection configuration with the "-properties" or "-p" option and your topic/ACL configuration with "-config" or "-c" option to generate your topic & ACL plans
+
+`java -jar <path-to-jar> -properties <path.properties> -config <path-config.yml>` 
+
+### Generate a Topic & ACL Plan, then apply the changes
+
+Supply your configuration as above & adding the "-execute" option to actually execute the plans
+
+`java -jar <path-to-jar>  -properties <path.properties> -config <path-config.yml> -execute`
