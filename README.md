@@ -1,4 +1,17 @@
-## Table of Contents  
+# Kafka-Admin
+Managing topics and acls at scale with Apache Kafka or Confluent Cloud can be a particularly challenging endeavor. 
+Kafka Admin was originally created to help address this challenge, particularly with managing ACLs for multi-tenant Kafka clusters. 
+Kafka Admin leverages the AdminClient APIs of Apache Kafka to programmatically create topics, as well as add/modify/delete ACLs, from an input configuration file (YAML). 
+
+Once the jar is compiled, using the application is as simple as supplying cluster configuration from a properties file and providing a topic/ACL YAML configuration. 
+If you already have an active cluster with topics and ACLs configured, you can use Kafka-Admin with the `dump` flag to output the cluster's configuration file (YAML). 
+
+Some of the use cases that have arisen which can leverage Kafka-Admin include:
+* Managing ACLs & Topics at scale with source controlled configurations
+* Migrating ACLs &/or Topics from one cluster to another by combining the `pull` mechanism of Kafka-Admin against the source cluster and applying the resulting output to the target cluster.
+* Automating ACLs & Topics with Confluent Cloud (otherwise requires using non-scriptable CLI)
+
+## Using Kafka-Admin  
 [Update Your Configuration File](#update-your-configuration-file)
 
 [Build the Application Jar](#build-the-application-jar-file)
@@ -58,7 +71,7 @@ If you're not using delete topics, then you do not need to worry about using the
 For a topic that already exists on the cluster, you can increase the number of partitions that the topic has by updating the configuration for the topic under the "topics" section.
 You can only increase partitions -- **there is no ability to remove or reduce partitions.** 
 
-Note that at this time, no other topic configurations can be modified by updating the config file. 
+Note that at this time (Jan 2020), no other topic configurations can be modified by updating the config file. 
 
 ### Add/Update/Remove ACLs
 
