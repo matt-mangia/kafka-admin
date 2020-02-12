@@ -13,7 +13,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Properties;
 
-class configloader {
+class ConfigLoader {
 
     private static String readFile(String filepath) {
         try {
