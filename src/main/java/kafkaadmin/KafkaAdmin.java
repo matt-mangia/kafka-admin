@@ -6,11 +6,9 @@ import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.kafka.common.acl.AclBinding;
 
 import java.io.*;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.*;
 
-class kafkaadmin {
+class KafkaAdmin {
 
     public static void main(String[] args) {
         String configFilepath = "", propsFilepath = "";
@@ -84,20 +82,20 @@ class kafkaadmin {
         if (dumpFlag){
             // only read and dump current config and exit
             System.err.println("Existing topics...");
-            HashMap<String, HashMap<String, Object>> allTopics = topic.getTopics(client, internalFlag);
+            HashMap<String, HashMap<String, Object>> allTopics = Topic.getTopics(client, internalFlag);
             if (allTopics != null)
-              configFile.println(topic.topicsToYAML(allTopics));
+              configFile.println(Topic.topicsToYAML(allTopics));
             System.err.println("Existing acls...");
-            Collection<AclBinding> aclInfo = acl.getAcls(client);
+            Collection<AclBinding> aclInfo = Acl.getAcls(client);
             if (aclInfo != null)
-              configFile.println(acl.aclsToYAML(aclInfo));
+              configFile.println(Acl.aclsToYAML(aclInfo));
             System.exit(0);
         }
         // First we need to read our yaml config
-        JsonNode config = configloader.readConfig(configFilepath);
+        JsonNode config = ConfigLoader.readConfig(configFilepath);
 
         //prepare topic lists & print topic plan here
-        HashMap<String, Set<String>> topicLists = topic.prepareTopics(client,config);
+        HashMap<String, Set<String>> topicLists = Topic.prepareTopics(client,config);
         System.out.println("\n----- Topic Plan -----");
         for ( String key : topicLists.keySet()){
             System.out.println("\n" + key + ":");
@@ -109,10 +107,10 @@ class kafkaadmin {
         if (executeFlag) {
             //create,modify, & delete the topics according to the plan
             System.out.print("\nCreating topics...");
-            topic.createTopics(client, config, topicLists.get("createTopicList"));
+            Topic.createTopics(client, config, topicLists.get("createTopicList"));
             System.out.println("Done!");
             System.out.print("\nIncreasing partitions...");
-            topic.increasePartitions(client, config, topicLists.get("increasePartitionList"));
+            Topic.increasePartitions(client, config, topicLists.get("increasePartitionList"));
             System.out.println("Done!");
         }
         else {
@@ -124,8 +122,8 @@ class kafkaadmin {
         //Commenting out deletion of topics -- to be done manually
         //topic.deleteTopics(client,topicLists.get("deleteTopicList"));
 
-        //prepare acl lists & print acl plan here
-        HashMap<String, Collection<AclBinding>> aclLists = acl.prepareAcls(client,config);
+        //prepare Acl lists & print Acl plan here
+        HashMap<String, Collection<AclBinding>> aclLists = Acl.prepareAcls(client,config);
         System.out.println("\n----- ACL Plan -----");
         for ( String key : aclLists.keySet()){
             System.out.println("\n" + key + ":");
@@ -137,11 +135,11 @@ class kafkaadmin {
         //create & delete the acls according to the plan
         if (executeFlag) {
             System.out.print("\nDeleting ACLs...");
-            acl.deleteAcls(client, aclLists.get("deleteAclList"));
+            Acl.deleteAcls(client, aclLists.get("deleteAclList"));
             System.out.println("Done!");
 
             System.out.print("\nCreating ACLs...");
-            acl.createAcls(client, aclLists.get("createAclList"));
+            Acl.createAcls(client, aclLists.get("createAclList"));
             System.out.println("Done!");
         }
         else {

@@ -11,7 +11,7 @@ import org.apache.kafka.common.config.ConfigResource;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
 
-class topic {
+class Topic {
 
     public static void printTopics(AdminClient client, boolean isInternal) {
         ListTopicsOptions options = new ListTopicsOptions();
