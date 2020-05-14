@@ -60,10 +60,12 @@ If you are you using delete topics (default is disabled), you will need to make 
 
 ```
 default_topics:
+  - my_topic_do_not_delete
+  - this_stays_too
   - _confluent-metrics
-  - __confluent.support.metrics
 ```
-
+All internal topics (crudely detected by _ at the beginning of the topic name) are ignored in the topic delete process unless explicitly forced by using `internal` flag.
+Also all topic delete operations must be explicitly enabled using `delete` flag (-d).
 If you're not using delete topics, then you do not need to worry about using the "default_topics" section. 
 
 #### Increasing Topic Partitions
@@ -306,3 +308,9 @@ Supply your connection configuration with the "-properties" or "-p" option and y
 Supply your configuration as above & adding the "-execute" option to actually execute the plans
 
 `java -jar <path-to-jar>  -properties <path.properties> -config <path-config.yml> -execute`
+
+### Generate a Topic & ACL Plan, then apply the changes and allow delete topics operation
+
+Supply your configuration as above & adding the "-execute -delete" options to actually execute the plans including the delete operation
+
+`java -jar <path-to-jar>  -properties <path.properties> -config <path-config.yml> -execute -delete`
