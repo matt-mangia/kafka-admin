@@ -92,7 +92,7 @@ class Topic {
         }
     }
 
-    public static HashMap<String, Set<String>> prepareTopics(AdminClient client, JsonNode config) {
+    public static HashMap<String, Set<String>> prepareTopics(AdminClient client, JsonNode config, Boolean isInternal) {
         try {
             if (!config.hasNonNull("topics")) {
                 return null;
@@ -124,9 +124,21 @@ class Topic {
             }
 
             //Determine topics to remove
-            //Commenting out -- all topic deletion will be done manually
-            //Set<String> removeTopics = new HashSet<>(currentTopics);
-            //removeTopics.removeAll(configuredTopics);
+            Set<String> removeTopicsTemp = new HashSet<>(currentTopics);
+            Set<String> removeTopics = new HashSet<>();
+            removeTopicsTemp.removeAll(configuredTopics);
+            for (String topicInfo : removeTopicsTemp) {
+                // ignore all "internal" topics unless forced
+                if (isInternal || !topicInfo.startsWith("_")) {
+                    removeTopics.add(topicInfo);
+                }
+            }
+            // Also remove all default topics
+            if (config.has("default_topics"))
+                for (JsonNode topic : config.get("default_topics")){
+                    if (removeTopics.contains(topic.asText()))
+                      removeTopics.remove(topic.asText());
+                }
 
             //Determine topics to add
             Set<String> addTopics = new HashSet<>(configuredTopics);
@@ -135,8 +147,7 @@ class Topic {
             HashMap<String,Set<String>> topicPlan = new HashMap<>();
             topicPlan.put("createTopicList", addTopics);
             topicPlan.put("increasePartitionList", increasePartitions);
-            //Commenting out deleteTopicList -- all topic deletion will be done manually
-            //topicPlan.put("deleteTopicList", removeTopics);
+            topicPlan.put("deleteTopicList", removeTopics);
 
             return topicPlan;
         } catch (InterruptedException | ExecutionException e) {

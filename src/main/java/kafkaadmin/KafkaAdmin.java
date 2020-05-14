@@ -12,7 +12,7 @@ class KafkaAdmin {
 
     public static void main(String[] args) {
         String configFilepath = "", propsFilepath = "";
-        boolean executeFlag = false, dumpFlag = false, internalFlag = false;
+        boolean executeFlag = false, dumpFlag = false, internalFlag = false, enableDelete = false;
         PrintStream configFile = System.out;
 
         CommandLine commandLine;
@@ -25,6 +25,7 @@ class KafkaAdmin {
         options.addOption("dump",false,"Dump Current Topics/ACLs Server Configuration");
         options.addOption("internal",false,"Force Internal Topics Configuration");
         options.addOption("o", "output",true,"Output File Name For Config Dump");
+        options.addOption("d", "delete",false,"Enable delete topic(s) operations");
         try {
             commandLine = parser.parse(options, args);
 
@@ -36,6 +37,9 @@ class KafkaAdmin {
             }
             if (commandLine.hasOption("internal")) {
                 internalFlag = true;
+            }
+            if (commandLine.hasOption("delete")) {
+                enableDelete = true;
             }
             if (commandLine.hasOption("execute")) {
                 if (!commandLine.hasOption("config")) {
@@ -95,7 +99,7 @@ class KafkaAdmin {
         JsonNode config = ConfigLoader.readConfig(configFilepath);
 
         //prepare topic lists & print topic plan here
-        HashMap<String, Set<String>> topicLists = Topic.prepareTopics(client,config);
+        HashMap<String, Set<String>> topicLists = Topic.prepareTopics(client, config, internalFlag);
         System.out.println("\n----- Topic Plan -----");
         for ( String key : topicLists.keySet()){
             System.out.println("\n" + key + ":");
@@ -112,15 +116,16 @@ class KafkaAdmin {
             System.out.print("\nIncreasing partitions...");
             Topic.increasePartitions(client, config, topicLists.get("increasePartitionList"));
             System.out.println("Done!");
+            if (enableDelete) {
+                System.out.print("\nDeleting partitions...");
+                Topic.deleteTopics(client, topicLists.get("deleteTopicList"));
+                System.out.println("Done!");
+            }
         }
         else {
-            System.out.println("Skipping create topics...use \"-execute\" to create topics from the plan.");
+            System.out.println("Skipping topics management...use \"-execute\" to apply the plan.");
         }
         System.out.println("----------------------");
-
-
-        //Commenting out deletion of topics -- to be done manually
-        //topic.deleteTopics(client,topicLists.get("deleteTopicList"));
 
         //prepare Acl lists & print Acl plan here
         HashMap<String, Collection<AclBinding>> aclLists = Acl.prepareAcls(client,config);
