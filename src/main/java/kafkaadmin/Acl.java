@@ -19,7 +19,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.concurrent.ExecutionException;
 
-class acl {
+class Acl {
 
     public static void createAcls(AdminClient client, Collection<AclBinding> addAclList) {
         try {

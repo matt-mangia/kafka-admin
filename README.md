@@ -1,16 +1,30 @@
-## Table of Contents  
+# Kafka-Admin
+Managing topics and acls at scale with Apache Kafka or Confluent Cloud can be a particularly challenging endeavor. 
+Kafka Admin was originally created to help address this challenge, particularly with managing ACLs for multi-tenant Kafka clusters. 
+Kafka Admin leverages the AdminClient APIs of Apache Kafka to programmatically create topics, as well as add/modify/delete ACLs, from an input configuration file (YAML). 
+
+Once the jar is compiled, using the application is as simple as supplying cluster configuration from a properties file and providing a topic/ACL YAML configuration. 
+If you already have an active cluster with topics and ACLs configured, you can use Kafka-Admin with the `dump` flag to output the cluster's configuration file (YAML). 
+
+Some of the use cases that have arisen which can leverage Kafka-Admin include:
+* Managing ACLs & Topics at scale with source controlled configurations
+* Migrating ACLs &/or Topics from one cluster to another by combining the `pull` mechanism of Kafka-Admin against the source cluster and applying the resulting output to the target cluster.
+* Automating ACLs & Topics with Confluent Cloud (otherwise requires using non-scriptable CLI)
+
+## Using Kafka-Admin  
 [Update Your Configuration File](#update-your-configuration-file)
 
 [Build the Application Jar](#build-the-application-jar-file)
 
-[Run the Jar](#run-the-jar-supplying-your-configuration-as-an-option)  
+[Run the Jar](#run-the-jar)  
 
-## Update your configuration file
+## Update your configuration files
 You can use the supplied `kafka-admin.properties.example` as a base. Update and rename to `kafka-admin.properties`.
+Alternatively, you can use this application to pull the topic & ACL configurations from an existing cluster. 
 
-### Add Cluster Configuration
+### Add Cluster Connection Configuration
 
-In your `kafka-admin.properties` file, add your cluster configuration as shown here:
+In your `kafka-admin.properties` file, add your cluster connection configuration as shown here:
 
 ```
 bootstrap.servers: pkc-l7p2j.us-west-2.aws.confluent.cloud:9092
@@ -20,8 +34,8 @@ sasl.mechanism: PLAIN
 ssl.endpoint.identification.algorithm: https
 ```
 
-Any cluster connection configuration properties may be specified here, just make sure they align to the actual Kafka client properties exactly. 
-For example, you can add "ssl.enabled.mechanisms". 
+Any cluster connection connection properties may be specified here, just make sure they align to the actual Kafka client properties exactly. 
+For example, you can add `ssl.enabled.mechanisms`. 
 Any properties that are not specified or are left with a blank value will use the default values. 
 
 ### Add/Update Topics
@@ -57,7 +71,7 @@ If you're not using delete topics, then you do not need to worry about using the
 For a topic that already exists on the cluster, you can increase the number of partitions that the topic has by updating the configuration for the topic under the "topics" section.
 You can only increase partitions -- **there is no ability to remove or reduce partitions.** 
 
-Note that at this time, no other topic configurations can be modified by updating the config file. 
+Note that at this time (Jan 2020), no other topic configurations can be modified by updating the config file. 
 
 ### Add/Update/Remove ACLs
 
@@ -267,23 +281,28 @@ From the project root directly, run the following:
 
 `mvn clean package`
 
-## Run the Jar, supplying your configuration with the "-properties" or "-p" and -config" or "-c" options to generate your topic & ACL plans
+## Run the Jar
 
-`java -jar <path-to-jar> -properties <path.properties> -config <path-config.yml>` 
+### Pull the configured topics & ACLs from a cluster **and print to stdout**
 
-## Run the Jar, supplying your configuration as above & adding the "-execute" option to actually execute the plans
-
-`java -jar <path-to-jar>  -properties <path.properties> -config <path-config.yml> -execute`
-
-## Run the Jar, supplying your connection configuration with the "-properties" or "-p" and "-dump" options to print out current topic/ACLs configuration to stdout
+Supply your connection configuration with the "-properties" or "-p" and "-dump" options to print out current topic/ACLs configuration to stdout
 
 `java -jar <path-to-jar>  -properties <path.properties> -dump`
 
-## Run the Jar, supplying your connection configuration with the "-properties" or "-p", "-dump" and "-output" or "-o" options to print out current topic/ACLs configuration to a file
+### Pull the configured topics & ACLs from a cluster **and write to an output file**
+
+Supply your connection configuration with the "-properties" or "-p", "-dump" and "-output" or "-o" options to print out current topic/ACLs configuration to a file
 
 `java -jar <path-to-jar>  -properties <path.properties> -dump -output <path-output.yml>`
 
-alternatively run the following to output the dump to stdout
+### Generate a Topic & ACL Plan but **do not** apply any changes
 
-`java -jar <path-to-jar>  -properties <path.properties> -dump`
- 
+Supply your connection configuration with the "-properties" or "-p" option and your topic/ACL configuration with "-config" or "-c" option to generate your topic & ACL plans
+
+`java -jar <path-to-jar> -properties <path.properties> -config <path-config.yml>` 
+
+### Generate a Topic & ACL Plan, then apply the changes
+
+Supply your configuration as above & adding the "-execute" option to actually execute the plans
+
+`java -jar <path-to-jar>  -properties <path.properties> -config <path-config.yml> -execute`
