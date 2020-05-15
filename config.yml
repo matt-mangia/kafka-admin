@@ -12,6 +12,7 @@ topics:
 default_topics:
   - do.not.delete.me
   - _.*
+  - connect-.*
 
 acls:
   project-1:
