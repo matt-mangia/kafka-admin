@@ -3,4 +3,5 @@ target
 .project
 .classpath
 .idea
+.vscode
 kafka-admin.iml
