@@ -10,8 +10,8 @@ topics:
     retention.ms:
 
 default_topics:
-  - _confluent-metrics
-  - __confluent.support.metrics
+  - do.not.delete.me
+  - _.*
 
 acls:
   project-1:
