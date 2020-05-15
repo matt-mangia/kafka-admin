@@ -62,10 +62,12 @@ If you are you using delete topics (default is disabled), you will need to make 
 default_topics:
   - my_topic_do_not_delete
   - this_stays_too
-  - _confluent-metrics
+  - ^{1,2}_confluent-.*
+  - ^connect-cluster-.*
 ```
-All internal topics (crudely detected by _ at the beginning of the topic name) are ignored in the topic delete process unless explicitly forced by using `internal` flag.
-Also all topic delete operations must be explicitly enabled using `delete` flag (-d).
+
+All (truly) internal topics are ignored by the delete process, for the rest use regex pattern as outlined above.
+All topic delete operations must be explicitly enabled using `delete` flag (-d).
 If you're not using delete topics, then you do not need to worry about using the "default_topics" section. 
 
 #### Increasing Topic Partitions

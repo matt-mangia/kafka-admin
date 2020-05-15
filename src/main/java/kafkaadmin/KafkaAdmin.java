@@ -99,7 +99,7 @@ class KafkaAdmin {
         JsonNode config = ConfigLoader.readConfig(configFilepath);
 
         //prepare topic lists & print topic plan here
-        HashMap<String, Set<String>> topicLists = Topic.prepareTopics(client, config, internalFlag);
+        HashMap<String, Set<String>> topicLists = Topic.prepareTopics(client, config);
         System.out.println("\n----- Topic Plan -----");
         for ( String key : topicLists.keySet()){
             System.out.println("\n" + key + ":");
@@ -117,9 +117,11 @@ class KafkaAdmin {
             Topic.increasePartitions(client, config, topicLists.get("increasePartitionList"));
             System.out.println("Done!");
             if (enableDelete) {
-                System.out.print("\nDeleting partitions...");
+                System.out.print("\nDeleting topics...");
                 Topic.deleteTopics(client, topicLists.get("deleteTopicList"));
                 System.out.println("Done!");
+            } else {
+                System.out.println("Skipping topics delete ...use \"-delete\" to execute the deletion.");
             }
         }
         else {
@@ -130,22 +132,26 @@ class KafkaAdmin {
         //prepare Acl lists & print Acl plan here
         HashMap<String, Collection<AclBinding>> aclLists = Acl.prepareAcls(client,config);
         System.out.println("\n----- ACL Plan -----");
-        for ( String key : aclLists.keySet()){
-            System.out.println("\n" + key + ":");
-            for (AclBinding value : aclLists.get(key)){
-                System.out.println(value);
+        if (aclLists != null)
+            for ( String key : aclLists.keySet()){
+                System.out.println("\n" + key + ":");
+                for (AclBinding value : aclLists.get(key)){
+                    System.out.println(value);
+                }
             }
-        }
 
         //create & delete the acls according to the plan
         if (executeFlag) {
-            System.out.print("\nDeleting ACLs...");
-            Acl.deleteAcls(client, aclLists.get("deleteAclList"));
-            System.out.println("Done!");
+            // check for systems without authorizer
+            if (aclLists != null) {
+                System.out.print("\nDeleting ACLs...");
+                Acl.deleteAcls(client, aclLists.get("deleteAclList"));
+                System.out.println("Done!");
 
-            System.out.print("\nCreating ACLs...");
-            Acl.createAcls(client, aclLists.get("createAclList"));
-            System.out.println("Done!");
+                System.out.print("\nCreating ACLs...");
+                Acl.createAcls(client, aclLists.get("createAclList"));
+                System.out.println("Done!");
+            }
         }
         else {
             System.out.println("Skipping create & delete ACLs...use \"-execute\" to create or delete ACLs from the plan.");

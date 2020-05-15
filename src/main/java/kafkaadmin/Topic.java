@@ -10,6 +10,10 @@ import org.apache.kafka.common.config.ConfigResource;
 
 import java.util.*;
 import java.util.concurrent.ExecutionException;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 class Topic {
 
@@ -92,7 +96,7 @@ class Topic {
         }
     }
 
-    public static HashMap<String, Set<String>> prepareTopics(AdminClient client, JsonNode config, Boolean isInternal) {
+    public static HashMap<String, Set<String>> prepareTopics(AdminClient client, JsonNode config) {
         try {
             if (!config.hasNonNull("topics")) {
                 return null;
@@ -124,21 +128,23 @@ class Topic {
             }
 
             //Determine topics to remove
-            Set<String> removeTopicsTemp = new HashSet<>(currentTopics);
-            Set<String> removeTopics = new HashSet<>();
-            removeTopicsTemp.removeAll(configuredTopics);
-            for (String topicInfo : removeTopicsTemp) {
-                // ignore all "internal" topics unless forced
-                if (isInternal || !topicInfo.startsWith("_")) {
-                    removeTopics.add(topicInfo);
+            Set<String> removeTopics = new HashSet<>(currentTopics);
+            removeTopics.removeAll(configuredTopics);
+
+            // Protect default topics
+            if (config.has("default_topics")) {
+                // build regex & compare
+                String pattern = StreamSupport.stream(config.get("default_topics").spliterator(), false).
+                                    map(jn->jn.asText()).
+                                    collect(Collectors.joining("|"));
+                if (pattern.length() > 0) {
+                    Pattern p = Pattern.compile(pattern);
+                    removeTopics = removeTopics.
+                                        stream().
+                                        filter(item -> !p.matcher(item).matches()).
+                                        collect(Collectors.toSet());
                 }
             }
-            // Also remove all default topics
-            if (config.has("default_topics"))
-                for (JsonNode topic : config.get("default_topics")){
-                    if (removeTopics.contains(topic.asText()))
-                      removeTopics.remove(topic.asText());
-                }
 
             //Determine topics to add
             Set<String> addTopics = new HashSet<>(configuredTopics);
