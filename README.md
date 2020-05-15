@@ -56,6 +56,8 @@ topics:
 You can choose to leave the additional configurations for a topic blank (and defaults will be used), or you can enter them as well under the desired topic. 
 It is important to note that the **additional configuration values must be entered as strings (wrapped in double quotes)** or they will cause an error to the application. 
 
+### Delete Topics
+
 If you are you using delete topics (default is disabled), you will need to make sure all topics that exist on the cluster are in your "topics" section or exist in the "default_topics" section, as shown here:
 
 ```
@@ -66,7 +68,7 @@ default_topics:
   - ^connect-cluster-.*
 ```
 
-All (truly) internal topics are ignored by the delete process, for the rest use regex pattern as outlined above.
+All (truly) internal topics are ignored by the delete process, for the rest use a list or regex pattern as shown above.
 All topic delete operations must be explicitly enabled using `delete` flag (-d).
 If you're not using delete topics, then you do not need to worry about using the "default_topics" section. 
 
