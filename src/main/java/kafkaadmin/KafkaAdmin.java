@@ -12,7 +12,7 @@ class KafkaAdmin {
 
     public static void main(String[] args) {
         String configFilepath = "", propsFilepath = "";
-        boolean executeFlag = false, dumpFlag = false, internalFlag = false, forceACLCleanup = false;
+        boolean executeFlag = false, dumpFlag = false, internalFlag = false, forceACLCleanup = true;
         PrintStream configFile = System.out;
 
         CommandLine commandLine;
@@ -22,7 +22,7 @@ class KafkaAdmin {
         options.addOption("c", "config", true, "Config File Location");
         options.addRequiredOption("p", "properties", true, "Connection Properties File Location");
         options.addOption("execute", false, "Execute Flag");
-        options.addOption("forceaclcleanup", false, "Skip ACL deletion if that is not a desired effect");
+        options.addOption("noaclcleanup", false, "Skip ACL deletion if that is not a desired effect");
         options.addOption("dump", false, "Dump Current Topics/ACLs Server Configuration");
         options.addOption("internal", false, "Force Internal Topics Configuration");
         options.addOption("o", "output", true, "Output File Name For Config Dump");
@@ -38,8 +38,8 @@ class KafkaAdmin {
             if (commandLine.hasOption("internal")) {
                 internalFlag = true;
             }
-            if (commandLine.hasOption("forceaclcleanup")) {
-                forceACLCleanup = true;
+            if (commandLine.hasOption("noaclcleanup")) {
+                forceACLCleanup = false;
             }
             if (commandLine.hasOption("execute")) {
                 if (!commandLine.hasOption("config")) {
@@ -140,7 +140,7 @@ class KafkaAdmin {
                 Acl.deleteAcls(client, aclLists.get("deleteAclList"));
                 System.out.println("Done!");
             } else {
-                System.out.println("Skipping ACL Deletes as -forceaclcleanup is not provided.");
+                System.out.println("Skipping ACL Deletes as -noaclcleanup is provided.");
             }
             System.out.print("\nCreating ACLs...");
             Acl.createAcls(client, aclLists.get("createAclList"));
