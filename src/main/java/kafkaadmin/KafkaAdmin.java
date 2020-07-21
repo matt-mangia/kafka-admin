@@ -14,7 +14,7 @@ class KafkaAdmin {
 
     public static void main(String[] args) {
         String configFilepath = "", propsFilepath = "";
-        boolean executeFlag = false, dumpFlag = false, internalFlag = false, enableDelete = false, forceACLCleanup = true, rbacProcess = false;
+        boolean executeFlag = false, dumpFlag = false, internalFlag = false, forceACLCleanup = true, enableDelete = false, rbacProcess = false;
         PrintStream configFile = System.out;
         String rbacToken = "";
 
@@ -54,26 +54,25 @@ class KafkaAdmin {
             }
             if (commandLine.hasOption("execute")) {
                 if (!commandLine.hasOption("config")) {
-                    throw(new ParseException("Missing -config (-c) option for execute operation"));
+                    throw (new ParseException("Missing -config (-c) option for execute operation"));
                 }
                 executeFlag = true;
             } else {
                 // only if not executing
                 if (commandLine.hasOption("dump")) {
                     if (commandLine.hasOption("config")) {
-                        throw(new ParseException("Cannot use -config (-c) option for the dump operation"));
+                        throw (new ParseException("Cannot use -config (-c) option for the dump operation"));
                     }
                     dumpFlag = true;
                     if (commandLine.hasOption("output"))
                         configFile = new PrintStream(commandLine.getOptionValue("output"));
                 }
             }
-        }
-        catch (ParseException exception)
-        {
+        } catch (ParseException exception) {
             System.err.println("Argument Error: " + exception.getMessage());
-            if (exception.getMessage().equals("Missing required option: p")){
-                System.err.println("You must specify a connection properties file location using the -p or -properties argument.");
+            if (exception.getMessage().equals("Missing required option: p")) {
+                System.err.println(
+                        "You must specify a connection properties file location using the -p or -properties argument.");
             }
             System.exit(1);
         } catch (FileNotFoundException e) {
@@ -103,12 +102,12 @@ class KafkaAdmin {
             }
         }
 
-        if (dumpFlag){
+        if (dumpFlag) {
             // only read and dump current config and exit
             System.err.println("Existing topics...");
             HashMap<String, HashMap<String, Object>> allTopics = Topic.getTopics(client, internalFlag);
             if (allTopics != null)
-              configFile.println(Topic.topicsToYAML(allTopics));
+                configFile.println(Topic.topicsToYAML(allTopics));
             System.err.println("Existing acls...");
             Collection<AclBinding> aclInfo = Acl.getAcls(client);
             if (aclInfo != null)
@@ -123,18 +122,19 @@ class KafkaAdmin {
         }
         // First we need to read our yaml config
         JsonNode config = ConfigLoader.readConfig(configFilepath);
-        //prepare topic lists & print topic plan here
-        HashMap<String, Set<String>> topicLists = Topic.prepareTopics(client, config);
+
+        // prepare topic lists & print topic plan here
+        HashMap<String, Set<String>> topicLists = Topic.prepareTopics(client,config);
         System.out.println("\n----- Topic Plan -----");
-        for ( String key : topicLists.keySet()){
+        for (String key : topicLists.keySet()) {
             System.out.println("\n" + key + ":");
-            for (String value : topicLists.get(key)){
+            for (String value : topicLists.get(key)) {
                 System.out.println(value);
             }
         }
 
         if (executeFlag) {
-            //create,modify, & delete the topics according to the plan
+            // create,modify, & delete the topics according to the plan
             System.out.print("\nCreating topics...");
             Topic.createTopics(client, config, topicLists.get("createTopicList"));
             System.out.println("Done!");
@@ -165,7 +165,7 @@ class KafkaAdmin {
                 }
             }
 
-        //create & delete the acls according to the plan
+        // create & delete the acls according to the plan
         if (executeFlag) {
             // check for systems without authorizer
             if (aclLists != null) {
