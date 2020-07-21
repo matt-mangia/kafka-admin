@@ -22,7 +22,7 @@ import java.util.Properties;
 class Rbac {
   public static void pushRoleBindings(MDSClient client, Collection<RoleBinding> newRoleBindings, Properties props, String token, Boolean delete)
   {
-    if (newRoleBindings == null || newRoleBindings.size() == 0) {
+    if (newRoleBindings == null) {
       return;
     }
     for (RoleBinding roleBinding : newRoleBindings) {
@@ -46,7 +46,7 @@ class Rbac {
   public interface AuthJSONKey {
 
   }
-  static public class RoleBindingKey implements AuthJSONKey {
+  static class RoleBindingKey implements AuthJSONKey {
     public String principal;
     public String role;
     public Map<String,Map<String,String>> scope;
@@ -61,7 +61,7 @@ class Rbac {
   public interface AuthJSONValue {
 
   }
-  static public class RoleBindingValue implements AuthJSONValue {
+  static class RoleBindingValue implements AuthJSONValue {
     public ArrayList<RoleBindingResource> resources;
     public String toString() {
       return new com.google.gson.Gson().toJson(this);
@@ -70,14 +70,15 @@ class Rbac {
 
   // plain old consumer, read RoleBinding messages and compose a final list of RoleBindings
   public static ArrayList<RoleBinding> getRolebindings(Properties props) {
+    final String authTopic = props.getProperty("auth.topic.name");
+    final Map<String, String> roleBindingMap = new HashMap<String, String>();
+    final ObjectMapper om = new ObjectMapper();
+    // from beginning and no commit
     props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
     props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.StringDeserializer");
     props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.StringDeserializer");
     props.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, false);
-    final String authTopic = props.getProperty("auth.topic.name");
-    final Map<String, String> roleBindingMap = new HashMap<String, String>();
     final Consumer<String, String> consumer = new KafkaConsumer<String, String>(props);
-    final ObjectMapper om = new ObjectMapper();
     consumer.subscribe(Arrays.asList(authTopic));
     try {
       while (true) {
@@ -90,6 +91,7 @@ class Rbac {
           if (record.value() != null) {
             roleBindingMap.put(record.key(), record.value());
           } else {
+            // tombstone
             roleBindingMap.remove(record.key());
           }
         }
@@ -97,22 +99,24 @@ class Rbac {
     } finally {
       consumer.close();
     }
+    // map rolebindings
     ArrayList<RoleBinding> returnList = new ArrayList<RoleBinding>();
     for (Map.Entry<String, String> roleBinds : roleBindingMap.entrySet()) {
-      RoleBindingKey rbk = null;
-      RoleBindingValue rbv = null;
+      RoleBindingKey rbKey = null;
+      RoleBindingValue rbValue = null;
       try {
-        rbk = om.readValue(roleBinds.getKey(), RoleBindingKey.class);
-        rbv = om.readValue(roleBinds.getValue(), RoleBindingValue.class);
+        rbKey = om.readValue(roleBinds.getKey(), RoleBindingKey.class);
+        rbValue = om.readValue(roleBinds.getValue(), RoleBindingValue.class);
         // compose resulting list of RoleBindings
         RoleBinding rb = new RoleBinding();
-        rb.principal = rbk.principal;
-        rb.role = rbk.role;
-        rb.scope = rbk.scope;
-        rb.resources = rbv.resources;
+        rb.principal = rbKey.principal;
+        rb.role = rbKey.role;
+        rb.scope = rbKey.scope;
+        rb.resources = rbValue.resources;
         returnList.add(rb);
       } catch (JsonMappingException e) {
         // e.printStackTrace();
+        // expected as there are other message types in the topic
       } catch (JsonProcessingException e) {
         // e.printStackTrace();
       }
@@ -124,13 +128,13 @@ class Rbac {
     HashMap<String, HashMap<String, HashMap<String,Object>>> rolebindMap = new HashMap<>();
     LinkedHashMap<String, HashMap<String,Object>> rolebindItem = new LinkedHashMap<>();
     int counter = 1;
-    for(RoleBinding k : currentRoleBindings) {
+    for(RoleBinding roleBinding : currentRoleBindings) {
       HashMap<String, Object> rolebindingConfig = new HashMap<>();
-      rolebindingConfig.put("principal", k.principal);
-      rolebindingConfig.put("role", k.role);
-      rolebindingConfig.put("scope",k.scope);
-      if (k.resources != null)
-        rolebindingConfig.put("resource",k.resources);
+      rolebindingConfig.put("principal", roleBinding.principal);
+      rolebindingConfig.put("role", roleBinding.role);
+      rolebindingConfig.put("scope",roleBinding.scope);
+      if (roleBinding.resources != null)
+        rolebindingConfig.put("resource",roleBinding.resources);
       rolebindItem.put("RoleBinding-"+counter++,rolebindingConfig);
     }
     rolebindMap.put("rolebindings",rolebindItem);
@@ -153,17 +157,38 @@ class Rbac {
       return null;
     }
     //Get current RoleBindings
-    Collection<RoleBinding> currentRoleBindings = getRolebindings(props);
+    Collection<RoleBinding> currentRoleTemp = getRolebindings(props);
+    // expand the resourcePatterns for easy delta evaluation
+    Collection<RoleBinding> currentRoleBindings = new ArrayList<>();
+    for (RoleBinding roleBinding : currentRoleTemp) {
+      if (roleBinding.resources != null) {
+        for (RoleBindingResource resource : roleBinding.resources) {
+          RoleBinding rbTemp = new RoleBinding(roleBinding);
+          rbTemp.resources = new ArrayList<>(Arrays.asList(resource));
+          currentRoleBindings.add(rbTemp);
+        }
+      } else {
+        currentRoleBindings.add(roleBinding);
+      }
+    }
     //Get configured RoleBindings
     Collection<RoleBinding> configuredRoleBindings = new ArrayList<>();
     ObjectMapper mapper = new ObjectMapper();
     for (JsonNode rbac : config.get("rolebindings")) {
-      RoleBinding rb = new RoleBinding();
-      rb.principal = rbac.get("principal").textValue();
-      rb.role = rbac.get("role").textValue();
-      rb.scope = mapper.convertValue(rbac.get("scope"), new TypeReference<Map<String, Map<String,String>>>(){});
-      rb.resources = mapper.convertValue(rbac.get("resource"), new TypeReference<ArrayList<RoleBindingResource>>(){});
-      configuredRoleBindings.add(rb);
+      RoleBinding rbTemp = new RoleBinding();
+      rbTemp.principal = rbac.get("principal").textValue();
+      rbTemp.role = rbac.get("role").textValue();
+      rbTemp.scope = mapper.convertValue(rbac.get("scope"), new TypeReference<Map<String, Map<String,String>>>(){});
+      if (rbac.has("resource")) {
+        Collection<RoleBindingResource> resources = mapper.convertValue(rbac.get("resource"), new TypeReference<ArrayList<RoleBindingResource>>(){});
+        for (RoleBindingResource resource : resources) {
+          rbTemp.resources = new ArrayList<>(Arrays.asList(resource));
+          configuredRoleBindings.add(rbTemp);
+          rbTemp = new RoleBinding(rbTemp);
+        }
+      } else {
+        configuredRoleBindings.add(rbTemp);
+      }
     }
 
     //Determine RoleBindings to remove

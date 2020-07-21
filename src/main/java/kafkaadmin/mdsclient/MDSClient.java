@@ -9,35 +9,23 @@ import java.io.IOException;
 import java.util.*;
 // Simple http client for MDS access
 public class MDSClient {
-    final String verpath = "/security/1.0";
+    private final String verpath = "/security/1.0";
     private String baseurl;
     private String token;
-    public static final MediaType JSON
+    private static final MediaType JSON
             = MediaType.get("application/json");
+    private OkHttpClient client;
     public String authenticate(String url, String username, String password)
     {
         baseurl = url;
-        OkHttpClient client = new OkHttpClient.Builder()
-                .authenticator(new Authenticator() {
-                    @Override public Request authenticate(Route route, Response response) throws IOException {
-                        if (response.request().header("Authorization") != null) {
-                            return null; // Give up, we've already attempted to authenticate.
-                        }
-                        System.out.println("Authenticating for response: " + response);
-                        System.out.println("Challenges: " + response.challenges());
-                        String credential = Credentials.basic(username, password);
-                        return response.request().newBuilder()
-                                .header("Authorization", credential)
-                                .build();
-                    }
-                })
-                .build();
+        client = new OkHttpClient();
         Request request = new Request.Builder()
                 .url(baseurl+verpath+"/authenticate")
+                .addHeader("Authorization", Credentials.basic(username, password))
                 .build();
         try (Response response = client.newCall(request).execute()) {
             if (!response.isSuccessful()) System.err.println("Unexpected code " + response);
-            System.out.println(response.body().string());
+            System.err.println(response.code());
             Map<String, List<String>> headers = response.headers().toMultimap();
             token = headers.get("Set-Cookie").get(0).split(";")[0].replace("auth_token=","");
         } catch (IOException e) {
@@ -47,7 +35,6 @@ public class MDSClient {
     }
     public Boolean addRoleForPrincipal(String principal, String role, Map<String, Map<String,String>> scope)
     {
-        OkHttpClient client = new OkHttpClient();
         ObjectMapper mapperObj = new ObjectMapper();
         String json = null;
         Boolean result = false;
@@ -67,15 +54,15 @@ public class MDSClient {
                 System.err.println("Unexpected code " + response);
             else
                 result = true;
-            System.out.println(response.body().string());
+            System.err.println(response.code());
         } catch (IOException e) {
             e.printStackTrace();
         }
         return result;
     }
-    public Boolean addRoleResourcesForPrincipal(String principal, String role, Map<String, Map<String,String>> scope, ArrayList<RoleBindingResource> resourcesRequest)
+    public Boolean addRoleResourcesForPrincipal(String principal, String role, Map<String, Map<String,String>> scope,
+                                                ArrayList<RoleBindingResource> resourcesRequest)
     {
-        OkHttpClient client = new OkHttpClient();
         ObjectMapper mapperObj = new ObjectMapper();
         String json = null;
         Boolean result = false;
@@ -98,7 +85,7 @@ public class MDSClient {
                 System.err.println("Unexpected code " + response);
             else
                 result = true;
-            System.out.println(response.body().string());
+            System.err.println(response.code());
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -106,7 +93,6 @@ public class MDSClient {
     }
     public Boolean deleteRoleForPrincipal(String principal, String role, Map<String, Map<String,String>> scope)
     {
-        OkHttpClient client = new OkHttpClient();
         ObjectMapper mapperObj = new ObjectMapper();
         String json = null;
         Boolean result = false;
@@ -126,16 +112,16 @@ public class MDSClient {
                 System.err.println("Unexpected code " + response);
             else
                 result = true;
-            System.out.println(response.body().string());
+            System.err.println(response.code());
         } catch (IOException e) {
             e.printStackTrace();
         }
         return result;
     }
 
-    public Boolean deleteRoleResourcesForPrincipal(String principal, String role, Map<String,Map<String,String>> scope, ArrayList<RoleBindingResource> resourcesRequest)
+    public Boolean deleteRoleResourcesForPrincipal(String principal, String role, Map<String,Map<String,String>> scope,
+                                                   ArrayList<RoleBindingResource> resourcesRequest)
     {
-        OkHttpClient client = new OkHttpClient();
         ObjectMapper mapperObj = new ObjectMapper();
         String json = null;
         Boolean result = false;
@@ -158,7 +144,7 @@ public class MDSClient {
                 System.err.println("Unexpected code " + response);
             else
                 result = true;
-            System.out.println(response.body().string());
+            System.err.println(response.code());
         } catch (IOException e) {
             e.printStackTrace();
         }

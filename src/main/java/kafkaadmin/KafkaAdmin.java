@@ -184,6 +184,7 @@ class KafkaAdmin {
         else {
             System.out.println("Skipping create & delete ACLs...use \"-execute\" to create or delete ACLs from the plan.");
         }
+
         //prepare RoleBinding lists & print RoleBinding plan here
         HashMap<String, Collection<RoleBinding>> roleBindingLists = Rbac.prepareRoleBindings(props,config);
         System.out.println("\n----- RoleBinding Plan -----");

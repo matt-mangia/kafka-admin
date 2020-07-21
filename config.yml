@@ -34,177 +34,62 @@ default_topics:
 
 rolebindings:
   RoleBinding-1:
-    principal: User:c3
-    role: SystemAdmin
+    principal: User:cliente
+    role: DeveloperRead
+    resource:
+      - resourceType: Group
+        name: console-consumer-
+        patternType: PREFIXED
     scope:
       clusters:
-        kafka-cluster: bPintziuSNCdwrp5m0jO9w
+        kafka-cluster: ECBwt-DmSe-WkKNg2dxdXg
   RoleBinding-2:
-    principal: User:clienta
-    role: ResourceOwner
+    principal: User:clientc
+    role: DeveloperRead
     resource:
-      - resourceType: Topic
-        name: topic1
+      - resourceType: Subject
+        name: pageviews-value
         patternType: LITERAL
     scope:
       clusters:
-        kafka-cluster: bPintziuSNCdwrp5m0jO9w
+        kafka-cluster: ECBwt-DmSe-WkKNg2dxdXg
+        schema-registry-cluster: schema-registry-demo
   RoleBinding-3:
     principal: User:connect
-    role: ResourceOwner
-    resource:
-      - resourceType: Topic
-        name: connect-configs
-        patternType: LITERAL
-      - resourceType: Group
-        name: connect-cluster
-        patternType: LITERAL
-      - resourceType: Topic
-        name: _confluent-secrets
-        patternType: LITERAL
-      - resourceType: Group
-        name: secret-registry
-        patternType: LITERAL
-      - resourceType: Topic
-        name: connect-offsets
-        patternType: LITERAL
-      - resourceType: Topic
-        name: connect-statuses
-        patternType: LITERAL
+    role: SecurityAdmin
     scope:
       clusters:
-        kafka-cluster: bPintziuSNCdwrp5m0jO9w
+        kafka-cluster: ECBwt-DmSe-WkKNg2dxdXg
+        connect-cluster: connect-cluster
   RoleBinding-4:
     principal: User:ksqlDBserver
-    role: ResourceOwner
-    resource:
-      - resourceType: Topic
-        name: _confluent-ksql-rbac-ksql_command_topic
-        patternType: LITERAL
-      - resourceType: Topic
-        name: _confluent-ksql-rbac-ksqltransient
-        patternType: PREFIXED
-      - resourceType: TransactionalId
-        name: rbac-ksql
-        patternType: LITERAL
-      - resourceType: Topic
-        name: rbac-ksqlksql_processing_log
-        patternType: LITERAL
-      - resourceType: Topic
-        name: CTAS_TABLE1
-        patternType: LITERAL
-      - resourceType: Topic
-        name: CSAS_STREAM1
-        patternType: LITERAL
-      - resourceType: Topic
-        name: _confluent-ksql-rbac-ksql
-        patternType: PREFIXED
-    scope:
-      clusters:
-        kafka-cluster: bPintziuSNCdwrp5m0jO9w
-  RoleBinding-5:
-    principal: User:ksqlDBserver
     role: SecurityAdmin
     scope:
       clusters:
-        kafka-cluster: bPintziuSNCdwrp5m0jO9w
+        kafka-cluster: ECBwt-DmSe-WkKNg2dxdXg
         ksql-cluster: rbac-ksql
+  RoleBinding-5:
+    principal: User:cliente
+    role: ResourceOwner
+    resource:
+      - resourceType: Subject
+        name: pageviews-value
+        patternType: LITERAL
+    scope:
+      clusters:
+        kafka-cluster: ECBwt-DmSe-WkKNg2dxdXg
+        schema-registry-cluster: schema-registry-demo
   RoleBinding-6:
-    principal: User:clientc
-    role: DeveloperRead
-    resource:
-      - resourceType: Subject
-        name: pageviews-value
-        patternType: LITERAL
-    scope:
-      clusters:
-        kafka-cluster: bPintziuSNCdwrp5m0jO9w
-        schema-registry-cluster: schema-registry-demo
-  RoleBinding-7:
-    principal: User:clientd
-    role: ResourceOwner
-    resource:
-      - resourceType: Connector
-        name: datagen-pageviews
-        patternType: LITERAL
-    scope:
-      clusters:
-        kafka-cluster: bPintziuSNCdwrp5m0jO9w
-        connect-cluster: connect-cluster
-  RoleBinding-8:
-    principal: User:cliente
-    role: ResourceOwner
-    resource:
-      - resourceType: Subject
-        name: pageviews-value
-        patternType: LITERAL
-    scope:
-      clusters:
-        kafka-cluster: bPintziuSNCdwrp5m0jO9w
-        schema-registry-cluster: schema-registry-demo
-  RoleBinding-9:
-    principal: User:connect
-    role: SecurityAdmin
-    scope:
-      clusters:
-        kafka-cluster: bPintziuSNCdwrp5m0jO9w
-        connect-cluster: connect-cluster
-  RoleBinding-10:
-    principal: User:clientc
-    role: DeveloperRead
-    resource:
-      - resourceType: Topic
-        name: pageviews
-        patternType: LITERAL
-      - resourceType: Topic
-        name: topic1
-        patternType: LITERAL
-    scope:
-      clusters:
-        kafka-cluster: bPintziuSNCdwrp5m0jO9w
-  RoleBinding-11:
-    principal: User:clientc
-    role: DeveloperRead
-    resource:
-      - resourceType: Connector
-        name: datagen-pageviews
-        patternType: LITERAL
-    scope:
-      clusters:
-        kafka-cluster: bPintziuSNCdwrp5m0jO9w
-        connect-cluster: connect-cluster
-  RoleBinding-12:
-    principal: User:cliente
-    role: ResourceOwner
-    resource:
-      - resourceType: Topic
-        name: pageviews
-        patternType: LITERAL
-    scope:
-      clusters:
-        kafka-cluster: bPintziuSNCdwrp5m0jO9w
-  RoleBinding-13:
-    principal: User:clientrp
+    principal: User:clienta
     role: DeveloperRead
     resource:
       - resourceType: Group
-        name: rest_proxy_consumer_group
-        patternType: LITERAL
+        name: console-consumer-
+        patternType: PREFIXED
     scope:
       clusters:
-        kafka-cluster: bPintziuSNCdwrp5m0jO9w
-  RoleBinding-14:
-    principal: User:ksqlDBcli
-    role: DeveloperWrite
-    resource:
-      - resourceType: KsqlCluster
-        name: ksql-cluster
-        patternType: LITERAL
-    scope:
-      clusters:
-        kafka-cluster: bPintziuSNCdwrp5m0jO9w
-        ksql-cluster: rbac-ksql
-  RoleBinding-15:
+        kafka-cluster: ECBwt-DmSe-WkKNg2dxdXg
+  RoleBinding-7:
     principal: User:sr
     role: ResourceOwner
     resource:
@@ -216,27 +101,25 @@ rolebindings:
         patternType: LITERAL
     scope:
       clusters:
-        kafka-cluster: bPintziuSNCdwrp5m0jO9w
-  RoleBinding-16:
+        kafka-cluster: ECBwt-DmSe-WkKNg2dxdXg
+  RoleBinding-8:
     principal: User:cliente
-    role: SystemAdmin
+    role: ResourceOwner
+    resource:
+      - resourceType: Topic
+        name: pageviews
+        patternType: LITERAL
     scope:
       clusters:
-        kafka-cluster: bPintziuSNCdwrp5m0jO9w
-        ksql-cluster: rbac-ksql
-  RoleBinding-17:
-    principal: User:MySystemAdmin
-    role: SystemAdmin
+        kafka-cluster: ECBwt-DmSe-WkKNg2dxdXg
+  RoleBinding-9:
+    principal: User:sr
+    role: SecurityAdmin
     scope:
       clusters:
-        kafka-cluster: bPintziuSNCdwrp5m0jO9w
-  RoleBinding-18:
-    principal: User:cliente
-    role: SystemAdmin
-    scope:
-      clusters:
-        kafka-cluster: bPintziuSNCdwrp5m0jO9w
-  RoleBinding-19:
+        kafka-cluster: ECBwt-DmSe-WkKNg2dxdXg
+        schema-registry-cluster: schema-registry-demo
+  RoleBinding-10:
     principal: User:clientrp
     role: ResourceOwner
     resource:
@@ -245,109 +128,53 @@ rolebindings:
         patternType: LITERAL
     scope:
       clusters:
-        kafka-cluster: bPintziuSNCdwrp5m0jO9w
-  RoleBinding-20:
-    principal: User:ksqlDBcli
+        kafka-cluster: ECBwt-DmSe-WkKNg2dxdXg
+  RoleBinding-11:
+    principal: User:c3
+    role: SystemAdmin
+    scope:
+      clusters:
+        kafka-cluster: ECBwt-DmSe-WkKNg2dxdXg
+  RoleBinding-12:
+    principal: User:clientrp
+    role: DeveloperRead
+    resource:
+      - resourceType: Group
+        name: rest_proxy_consumer_group
+        patternType: LITERAL
+    scope:
+      clusters:
+        kafka-cluster: ECBwt-DmSe-WkKNg2dxdXg
+  RoleBinding-13:
+    principal: User:ksqlDBserver
     role: ResourceOwner
     resource:
       - resourceType: Topic
-        name: _confluent-ksql-rbac-ksqltransient
-        patternType: PREFIXED
+        name: _confluent-ksql-rbac-ksql_command_topic
+        patternType: LITERAL
+      - resourceType: TransactionalId
+        name: rbac-ksql
+        patternType: LITERAL
       - resourceType: Topic
         name: CTAS_TABLE1
         patternType: LITERAL
       - resourceType: Topic
+        name: _confluent-ksql-rbac-ksql
+        patternType: PREFIXED
+      - resourceType: Topic
         name: CSAS_STREAM1
-        patternType: LITERAL
-    scope:
-      clusters:
-        kafka-cluster: bPintziuSNCdwrp5m0jO9w
-  RoleBinding-21:
-    principal: User:ksqlDBserver
-    role: ResourceOwner
-    resource:
-      - resourceType: KsqlCluster
-        name: ksql-cluster
-        patternType: LITERAL
-    scope:
-      clusters:
-        kafka-cluster: bPintziuSNCdwrp5m0jO9w
-        ksql-cluster: rbac-ksql
-  RoleBinding-22:
-    principal: User:clienta
-    role: ResourceOwner
-    resource:
-      - resourceType: Subject
-        name: new-topic-value
-        patternType: LITERAL
-    scope:
-      clusters:
-        kafka-cluster: bPintziuSNCdwrp5m0jO9w
-        schema-registry-cluster: schema-registry-demo
-  RoleBinding-23:
-    principal: User:cliente
-    role: DeveloperRead
-    resource:
-      - resourceType: Group
-        name: console-consumer-
-        patternType: PREFIXED
-    scope:
-      clusters:
-        kafka-cluster: bPintziuSNCdwrp5m0jO9w
-  RoleBinding-24:
-    principal: User:clienta
-    role: DeveloperRead
-    resource:
-      - resourceType: Group
-        name: console-consumer-
-        patternType: PREFIXED
-    scope:
-      clusters:
-        kafka-cluster: bPintziuSNCdwrp5m0jO9w
-  RoleBinding-25:
-    principal: User:ksqlDBserver
-    role: DeveloperRead
-    resource:
-      - resourceType: Group
-        name: _confluent-ksql-rbac-ksql
-        patternType: PREFIXED
-      - resourceType: Topic
-        name: topic1
-        patternType: LITERAL
-    scope:
-      clusters:
-        kafka-cluster: bPintziuSNCdwrp5m0jO9w
-  RoleBinding-26:
-    principal: User:ksqlDBcli
-    role: DeveloperRead
-    resource:
-      - resourceType: Group
-        name: _confluent-ksql-rbac-ksql
-        patternType: PREFIXED
-      - resourceType: Topic
-        name: topic1
         patternType: LITERAL
       - resourceType: Topic
         name: rbac-ksqlksql_processing_log
         patternType: LITERAL
+      - resourceType: Topic
+        name: _confluent-ksql-rbac-ksqltransient
+        patternType: PREFIXED
     scope:
       clusters:
-        kafka-cluster: bPintziuSNCdwrp5m0jO9w
-  RoleBinding-27:
-    principal: User:sr
-    role: SecurityAdmin
-    scope:
-      clusters:
-        kafka-cluster: bPintziuSNCdwrp5m0jO9w
-        schema-registry-cluster: schema-registry-demo
-  RoleBinding-28:
-    principal: User:clienta
-    role: SecurityAdmin
-    scope:
-      clusters:
-        kafka-cluster: bPintziuSNCdwrp5m0jO9w
-  RoleBinding-29:
-    principal: User:clienta
+        kafka-cluster: ECBwt-DmSe-WkKNg2dxdXg
+  RoleBinding-14:
+    principal: User:clientc
     role: DeveloperRead
     resource:
       - resourceType: Topic
@@ -358,5 +185,145 @@ rolebindings:
         patternType: LITERAL
     scope:
       clusters:
-        kafka-cluster: bPintziuSNCdwrp5m0jO9w
-
+        kafka-cluster: ECBwt-DmSe-WkKNg2dxdXg
+  RoleBinding-15:
+    principal: User:clienta
+    role: ResourceOwner
+    resource:
+      - resourceType: Topic
+        name: topic1
+        patternType: LITERAL
+    scope:
+      clusters:
+        kafka-cluster: ECBwt-DmSe-WkKNg2dxdXg
+  RoleBinding-16:
+    principal: User:ksqlDBcli
+    role: DeveloperRead
+    resource:
+      - resourceType: Group
+        name: _confluent-ksql-rbac-ksql
+        patternType: PREFIXED
+      - resourceType: Topic
+        name: rbac-ksqlksql_processing_log
+        patternType: LITERAL
+      - resourceType: Topic
+        name: topic1
+        patternType: LITERAL
+    scope:
+      clusters:
+        kafka-cluster: ECBwt-DmSe-WkKNg2dxdXg
+  RoleBinding-17:
+    principal: User:ksqlDBserver
+    role: ResourceOwner
+    resource:
+      - resourceType: KsqlCluster
+        name: ksql-cluster
+        patternType: LITERAL
+    scope:
+      clusters:
+        kafka-cluster: ECBwt-DmSe-WkKNg2dxdXg
+        ksql-cluster: rbac-ksql
+  RoleBinding-18:
+    principal: User:ksqlDBcli
+    role: DeveloperWrite
+    resource:
+      - resourceType: KsqlCluster
+        name: ksql-cluster
+        patternType: LITERAL
+    scope:
+      clusters:
+        kafka-cluster: ECBwt-DmSe-WkKNg2dxdXg
+        ksql-cluster: rbac-ksql
+  RoleBinding-19:
+    principal: User:clienta
+    role: ResourceOwner
+    resource:
+      - resourceType: Subject
+        name: new-topic-value
+        patternType: LITERAL
+    scope:
+      clusters:
+        kafka-cluster: ECBwt-DmSe-WkKNg2dxdXg
+        schema-registry-cluster: schema-registry-demo
+  RoleBinding-20:
+    principal: User:clientd
+    role: ResourceOwner
+    resource:
+      - resourceType: Connector
+        name: datagen-pageviews
+        patternType: LITERAL
+    scope:
+      clusters:
+        kafka-cluster: ECBwt-DmSe-WkKNg2dxdXg
+        connect-cluster: connect-cluster
+  RoleBinding-21:
+    principal: User:ksqlDBserver
+    role: DeveloperRead
+    resource:
+      - resourceType: Group
+        name: _confluent-ksql-rbac-ksql
+        patternType: PREFIXED
+      - resourceType: Topic
+        name: topic1
+        patternType: LITERAL
+    scope:
+      clusters:
+        kafka-cluster: ECBwt-DmSe-WkKNg2dxdXg
+  RoleBinding-22:
+    principal: User:clientc
+    role: DeveloperRead
+    resource:
+      - resourceType: Connector
+        name: datagen-pageviews
+        patternType: LITERAL
+    scope:
+      clusters:
+        kafka-cluster: ECBwt-DmSe-WkKNg2dxdXg
+        connect-cluster: connect-cluster
+  RoleBinding-23:
+    principal: User:ksqlDBcli
+    role: ResourceOwner
+    resource:
+      - resourceType: Topic
+        name: CTAS_TABLE1
+        patternType: LITERAL
+      - resourceType: Topic
+        name: CSAS_STREAM1
+        patternType: LITERAL
+      - resourceType: Topic
+        name: _confluent-ksql-rbac-ksqltransient
+        patternType: PREFIXED
+    scope:
+      clusters:
+        kafka-cluster: ECBwt-DmSe-WkKNg2dxdXg
+  RoleBinding-24:
+    principal: User:connect
+    role: ResourceOwner
+    resource:
+      - resourceType: Topic
+        name: connect-configs
+        patternType: LITERAL
+      - resourceType: Topic
+        name: connect-statuses
+        patternType: LITERAL
+      - resourceType: Group
+        name: connect-cluster
+        patternType: LITERAL
+      - resourceType: Group
+        name: secret-registry
+        patternType: LITERAL
+      - resourceType: Topic
+        name: connect-offsets
+        patternType: LITERAL
+      - resourceType: Topic
+        name: _confluent-secrets
+        patternType: LITERAL
+    scope:
+      clusters:
+        kafka-cluster: ECBwt-DmSe-WkKNg2dxdXg
+  RoleBinding-25:
+    principal: User:MySystemAdmin
+    role: SystemAdmin
+    scope:
+      clusters:
+        kafka-cluster: ECBwt-DmSe-WkKNg2dxdXg

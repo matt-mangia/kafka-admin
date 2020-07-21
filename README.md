@@ -2,13 +2,14 @@
 Managing topics and acls at scale with Apache Kafka or Confluent Cloud can be a particularly challenging endeavor. 
 Kafka Admin was originally created to help address this challenge, particularly with managing ACLs for multi-tenant Kafka clusters. 
 Kafka Admin leverages the AdminClient APIs of Apache Kafka to programmatically create topics, as well as add/modify/delete ACLs, from an input configuration file (YAML). 
+Kafka Admin leverages the Metadata Service APIs of Confluent Server to programmatically to add/modify/delete rolebindings, from an input configuration file (YAML). 
 
-Once the jar is compiled, using the application is as simple as supplying cluster configuration from a properties file and providing a topic/ACL YAML configuration. 
-If you already have an active cluster with topics and ACLs configured, you can use Kafka-Admin with the `dump` flag to output the cluster's configuration file (YAML). 
+Once the jar is compiled, using the application is as simple as supplying cluster configuration from a properties file and providing a topic/ACL/Rolebindings YAML configuration. 
+If you already have an active cluster with topics, ACLs and RoleBindings configured, you can use Kafka-Admin with the `dump` flag to output the cluster's configuration file (YAML). 
 
 Some of the use cases that have arisen which can leverage Kafka-Admin include:
-* Managing ACLs & Topics at scale with source controlled configurations
-* Migrating ACLs &/or Topics from one cluster to another by combining the `pull` mechanism of Kafka-Admin against the source cluster and applying the resulting output to the target cluster.
+* Managing RoleBindings, ACLs & Topics at scale with source controlled configurations
+* Migrating RoleBindings, ACLs &/or Topics from one cluster to another by combining the `pull` mechanism of Kafka-Admin against the source cluster and applying the resulting output to the target cluster.
 * Automating ACLs & Topics with Confluent Cloud (otherwise requires using non-scriptable CLI)
 
 ## Using Kafka-Admin  
@@ -281,6 +282,59 @@ acls:
     host: '*'
 ```
 
+### Add/Update/Remove RoleBindings
+
+In your `config.yml` file, update the section under "rolebindings" with your complete list of rolebindings as shown in the examples below.
+Notice that for a combination of principal, role and scope you can add the resource specification as an additional item to already existing specification.
+Correspondingly you can just remove resourceType item and it will get deleted without impacting the rest of the rolebinding specification.
+To find the Kafka Cluster id you can utilize Zookeeper shell ```zookeeper-shell localhost:2181 get /cluster/id```
+
+```
+rolebindings:
+  RoleBinding-22:
+    principal: User:clientc
+    role: DeveloperRead
+    resource:
+      - resourceType: Connector
+        name: datagen-pageviews
+        patternType: LITERAL
+    scope:
+      clusters:
+        kafka-cluster: ECBwt-DmSe-WkKNg2dxdXg
+        connect-cluster: connect-cluster
+  RoleBinding-24:
+    principal: User:connect
+    role: ResourceOwner
+    resource:
+      - resourceType: Topic
+        name: connect-configs
+        patternType: LITERAL
+      - resourceType: Topic
+        name: connect-statuses
+        patternType: LITERAL
+      - resourceType: Group
+        name: connect-cluster
+        patternType: LITERAL
+      - resourceType: Group
+        name: secret-registry
+        patternType: LITERAL
+      - resourceType: Topic
+        name: connect-offsets
+        patternType: LITERAL
+      - resourceType: Topic
+        name: _confluent-secrets
+        patternType: LITERAL
+    scope:
+      clusters:
+        kafka-cluster: ECBwt-DmSe-WkKNg2dxdXg
+  RoleBinding-25:
+    principal: User:MySystemAdmin
+    role: SystemAdmin
+    scope:
+      clusters:
+        kafka-cluster: ECBwt-DmSe-WkKNg2dxdXg
+```
+
 ## Build the application jar file
 
 From the project root directly, run the following:
@@ -289,29 +343,33 @@ From the project root directly, run the following:
 
 ## Run the Jar
 
-### Pull the configured topics & ACLs from a cluster **and print to stdout**
+### Pull the configured topics, ACLs & RoleBindings from a cluster **and print to stdout**
 
-Supply your connection configuration with the "-properties" or "-p" and "-dump" options to print out current topic/ACLs configuration to stdout
+Supply your connection configuration with the "-properties" or "-p" and "-dump" options to print out current topic/ACLs/RoleBindings configuration to stdout
+Note - you need to use "-r" parameter to enable the RBAC related functionality.
 
-`java -jar <path-to-jar>  -properties <path.properties> -dump`
+`java -jar <path-to-jar>  -properties <path.properties> -dump -r`
 
-### Pull the configured topics & ACLs from a cluster **and write to an output file**
+### Pull the configured topics, ACLs & RoleBindings from a cluster **and write to an output file**
 
-Supply your connection configuration with the "-properties" or "-p", "-dump" and "-output" or "-o" options to print out current topic/ACLs configuration to a file
+Supply your connection configuration with the "-properties" or "-p", "-dump" and "-output" or "-o" options to print out current topic/ACLs/RoleBindings configuration to a file
+Note - you need to use "-r" parameter to enable the RBAC related functionality.
 
-`java -jar <path-to-jar>  -properties <path.properties> -dump -output <path-output.yml>`
+`java -jar <path-to-jar>  -properties <path.properties> -dump -output <path-output.yml> =r`
 
-### Generate a Topic & ACL Plan but **do not** apply any changes
+### Generate a Topic, ACL & RoleBindings Plan but **do not** apply any changes
 
 Supply your connection configuration with the "-properties" or "-p" option and your topic/ACL configuration with "-config" or "-c" option to generate your topic & ACL plans
+Note - you need to use "-r" parameter to enable the RBAC related functionality.
 
-`java -jar <path-to-jar> -properties <path.properties> -config <path-config.yml>` 
+`java -jar <path-to-jar> -properties <path.properties> -config <path-config.yml> -r` 
 
-### Generate a Topic & ACL Plan, then apply the changes
+### Generate a Topic, ACL & RoleBindings Plan, then apply the changes
 
 Supply your configuration as above & adding the "-execute" option to actually execute the plans
+Note - you need to use "-r" parameter to enable the RBAC related functionality.
 
-`java -jar <path-to-jar>  -properties <path.properties> -config <path-config.yml> -execute`
+`java -jar <path-to-jar>  -properties <path.properties> -config <path-config.yml> -execute -r`
 
 ### Generate a Topic & ACL Plan, then apply the changes and allow delete topics operation
 

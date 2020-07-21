@@ -39,5 +39,20 @@ public class RoleBinding {
                 append(resources).
                 toHashCode();
     }
+    public RoleBinding()
+    {
+        principal = null;
+        role = null;
+        scope = null;
+        resources = null;
+    }
+    public RoleBinding(RoleBinding copyRoleBinding)
+    {
+        this.principal = new String(copyRoleBinding.principal);
+        this.role = new String(copyRoleBinding.role);
+        // ugly but we do not need a full copy
+        this.scope = copyRoleBinding.scope;
+        this.resources = copyRoleBinding.resources;
+    }
 }
 
