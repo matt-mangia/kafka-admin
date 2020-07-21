@@ -14,7 +14,7 @@ class KafkaAdmin {
 
     public static void main(String[] args) {
         String configFilepath = "", propsFilepath = "";
-        boolean executeFlag = false, dumpFlag = false, internalFlag = false, enableDelete = false, rbacProcess = false;
+        boolean executeFlag = false, dumpFlag = false, internalFlag = false, enableDelete = false, forceACLCleanup = true, rbacProcess = false;
         PrintStream configFile = System.out;
         String rbacToken = "";
 
@@ -25,6 +25,7 @@ class KafkaAdmin {
         options.addOption("c","config",true,"Config File Location");
         options.addRequiredOption("p","properties",true,"Connection Properties File Location");
         options.addOption("execute",false,"Execute Flag");
+        options.addOption("noaclcleanup", false, "Skip ACL deletion if that is not a desired effect");
         options.addOption("dump",false,"Dump Current Topics/ACLs Server Configuration");
         options.addOption("internal",false,"Force Internal Topics Configuration");
         options.addOption("o", "output",true,"Output File Name For Config Dump");
@@ -41,6 +42,9 @@ class KafkaAdmin {
             }
             if (commandLine.hasOption("internal")) {
                 internalFlag = true;
+            }
+            if (commandLine.hasOption("noaclcleanup")) {
+                forceACLCleanup = false;
             }
             if (commandLine.hasOption("delete")) {
                 enableDelete = true;
@@ -165,10 +169,13 @@ class KafkaAdmin {
         if (executeFlag) {
             // check for systems without authorizer
             if (aclLists != null) {
-                System.out.print("\nDeleting ACLs...");
-                Acl.deleteAcls(client, aclLists.get("deleteAclList"));
-                System.out.println("Done!");
-
+                if (forceACLCleanup) {
+                    System.out.print("\nDeleting ACLs...");
+                    Acl.deleteAcls(client, aclLists.get("deleteAclList"));
+                    System.out.println("Done!");
+                } else {
+                    System.out.println("Skipping ACL Deletes as -noaclcleanup is provided.");
+                }
                 System.out.print("\nCreating ACLs...");
                 Acl.createAcls(client, aclLists.get("createAclList"));
                 System.out.println("Done!");
