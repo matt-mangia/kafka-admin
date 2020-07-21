@@ -1,6 +1,8 @@
 package kafkaadmin;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import kafkaadmin.mdsclient.MDSClient;
+import kafkaadmin.model.RoleBinding;
 import org.apache.commons.cli.*;
 import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.kafka.common.acl.AclBinding;
@@ -12,8 +14,9 @@ class KafkaAdmin {
 
     public static void main(String[] args) {
         String configFilepath = "", propsFilepath = "";
-        boolean executeFlag = false, dumpFlag = false, internalFlag = false, enableDelete = false;
+        boolean executeFlag = false, dumpFlag = false, internalFlag = false, enableDelete = false, rbacProcess = false;
         PrintStream configFile = System.out;
+        String rbacToken = "";
 
         CommandLine commandLine;
         Options options = new Options();
@@ -26,6 +29,7 @@ class KafkaAdmin {
         options.addOption("internal",false,"Force Internal Topics Configuration");
         options.addOption("o", "output",true,"Output File Name For Config Dump");
         options.addOption("d", "delete",false,"Enable delete topic(s) operations");
+        options.addOption("r", "rbac",false,"Test RBAC operations");
         try {
             commandLine = parser.parse(options, args);
 
@@ -40,6 +44,9 @@ class KafkaAdmin {
             }
             if (commandLine.hasOption("delete")) {
                 enableDelete = true;
+            }
+            if (commandLine.hasOption("rbac")) {
+                rbacProcess = true;
             }
             if (commandLine.hasOption("execute")) {
                 if (!commandLine.hasOption("config")) {
@@ -82,6 +89,15 @@ class KafkaAdmin {
 
         // Create our AdminClient using properties from our config file
         AdminClient client = AdminClient.create(props);
+        MDSClient mdsClient = null;
+        if (rbacProcess) {
+            mdsClient = new MDSClient();
+            rbacToken = mdsClient.authenticate(props.getProperty("mds.url"),props.getProperty("mds.user"),props.getProperty("mds.password"));
+            if (rbacToken == null) {
+                System.err.println("Unable to login to MDS with the provided credentials.");
+                System.exit(1);
+            }
+        }
 
         if (dumpFlag){
             // only read and dump current config and exit
@@ -93,11 +109,16 @@ class KafkaAdmin {
             Collection<AclBinding> aclInfo = Acl.getAcls(client);
             if (aclInfo != null)
               configFile.println(Acl.aclsToYAML(aclInfo));
+            if (rbacProcess) {
+                System.err.println("Existing RoleBindings...");
+                Collection<RoleBinding> roleBindingInfo = Rbac.getRolebindings(props);
+                if (roleBindingInfo != null)
+                    configFile.println(Rbac.roleBindingsToYAML(roleBindingInfo));
+            }
             System.exit(0);
         }
         // First we need to read our yaml config
         JsonNode config = ConfigLoader.readConfig(configFilepath);
-
         //prepare topic lists & print topic plan here
         HashMap<String, Set<String>> topicLists = Topic.prepareTopics(client, config);
         System.out.println("\n----- Topic Plan -----");
@@ -155,6 +176,33 @@ class KafkaAdmin {
         }
         else {
             System.out.println("Skipping create & delete ACLs...use \"-execute\" to create or delete ACLs from the plan.");
+        }
+        //prepare RoleBinding lists & print RoleBinding plan here
+        HashMap<String, Collection<RoleBinding>> roleBindingLists = Rbac.prepareRoleBindings(props,config);
+        System.out.println("\n----- RoleBinding Plan -----");
+        if (roleBindingLists != null)
+            for ( String key : roleBindingLists.keySet()){
+                System.out.println("\n" + key + ":");
+                for (RoleBinding value : roleBindingLists.get(key)){
+                    System.out.println(value);
+                }
+            }
+
+        //create & delete the RoleBindings according to the plan
+        if (executeFlag) {
+            // check for systems without authorizer
+            if (roleBindingLists != null) {
+                System.out.print("\nDeleting RoleBindings...");
+                Rbac.pushRoleBindings(mdsClient, roleBindingLists.get("deleteRoleBindingsList"),props, rbacToken, Boolean.TRUE);
+                System.out.println("Done!");
+
+                System.out.print("\nCreating RoleBindings...");
+                Rbac.pushRoleBindings(mdsClient, roleBindingLists.get("createRoleBindingsList"),props, rbacToken, Boolean.FALSE);
+                System.out.println("Done!");
+            }
+        }
+        else {
+            System.out.println("Skipping create & delete RoleBindings...use \"-execute\" to create or delete RoleBindings from the plan.");
         }
         System.out.println("----------------------");
     }

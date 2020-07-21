@@ -5,3 +5,4 @@ target
 .idea
 .vscode
 kafka-admin.iml
+.DS_Store
