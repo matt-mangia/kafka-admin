@@ -14,23 +14,23 @@ default_topics:
   - _.*
   - connect-.*
 
-#acls:
-#  project-1:
-#    resource-type: topic
-#    resource-name: matt-topic-A, matt-topic-C, matt-topic-D, matt-topic-S
-#    resource-pattern: LITERAL
-#    principal: User:Matt, User:Brien, User:Kevin, User:Aleks, User:Vedanta,User:Liying
-#    operation: ALL, READ, WRITE
-#    permission: ALLOW
-#    host: '*'
-#  project-1-2:
-#    resource-type: topic
-#    resource-name: matt-topic-
-#    resource-pattern: LITERAL
-#    principal: User:*
-#    operation: ALL
-#    permission: ALLOW
-#    host: '*'
+acls:
+  project-1:
+    resource-type: topic
+    resource-name: matt-topic-A, matt-topic-C, matt-topic-D, matt-topic-S
+    resource-pattern: LITERAL
+    principal: User:Matt, User:Brien, User:Kevin, User:Aleks, User:Vedanta,User:Liying
+    operation: ALL, READ, WRITE
+    permission: ALLOW
+    host: '*'
+  project-1-2:
+    resource-type: topic
+    resource-name: matt-topic-
+    resource-pattern: LITERAL
+    principal: User:*
+    operation: ALL
+    permission: ALLOW
+    host: '*'
 
 rolebindings:
   RoleBinding-1:
