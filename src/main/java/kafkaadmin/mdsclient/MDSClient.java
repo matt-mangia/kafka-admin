@@ -2,6 +2,8 @@ package kafkaadmin.mdsclient;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import kafkaadmin.model.AclRule;
+import kafkaadmin.model.CentralizedAclBinding;
 import kafkaadmin.model.RoleBindingResource;
 import okhttp3.*;
 
@@ -136,6 +138,64 @@ public class MDSClient {
         RequestBody body = RequestBody.create(JSON, json);
         Request request = new Request.Builder()
                 .url(baseurl+verpath+"/principals/"+principal+ "/roles/" + role + "/bindings")
+                .addHeader("Authorization", "Bearer " + token)
+                .delete(body)
+                .build();
+        try (Response response = client.newCall(request).execute()) {
+            if (!response.isSuccessful())
+                System.err.println("Unexpected code " + response);
+            else
+                result = true;
+            System.err.println(response.code());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return result;
+    }
+
+    public Boolean addCentralizedAcls(Map<String, String> resourcePattern, Map<String, Map<String,String>> scope,
+                                      ArrayList<AclRule> aclRules)
+    {
+        ObjectMapper mapperObj = new ObjectMapper();
+        String json = null;
+        Boolean result = false;
+        try {
+            json = mapperObj.writeValueAsString(scope);
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+        }
+        RequestBody body = RequestBody.create(JSON, json);
+        Request request = new Request.Builder()
+                .url(baseurl+verpath+"/acls")
+                .addHeader("Authorization", "Bearer " + token)
+                .post(body)
+                .build();
+        try (Response response = client.newCall(request).execute()) {
+            if (!response.isSuccessful())
+                System.err.println("Unexpected code " + response);
+            else
+                result = true;
+            System.err.println(response.code());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return result;
+    }
+
+    public Boolean deleteCentralizedAcls(Map<String, String> resourcePattern, Map<String, Map<String,String>> scope,
+                                         ArrayList<AclRule> aclRules)
+    {
+        ObjectMapper mapperObj = new ObjectMapper();
+        String json = null;
+        Boolean result = false;
+        try {
+            json = mapperObj.writeValueAsString(scope);
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+        }
+        RequestBody body = RequestBody.create(JSON, json);
+        Request request = new Request.Builder()
+                .url(baseurl+verpath+"/acls")
                 .addHeader("Authorization", "Bearer " + token)
                 .delete(body)
                 .build();

@@ -1,10 +1,7 @@
 package kafkaadmin;
 // Import classes:
-import com.fasterxml.jackson.annotation.JsonSubTypes;
-import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
@@ -12,12 +9,12 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLGenerator;
 import kafkaadmin.mdsclient.MDSClient;
 import kafkaadmin.model.RoleBinding;
 import kafkaadmin.model.RoleBindingResource;
-import org.apache.kafka.clients.consumer.*;
 
 import java.util.*;
 
-import java.time.Duration;
 import java.util.Properties;
+
+import static kafkaadmin.bindingclient.BindingLoader.getRolebindingsAndAcls;
 
 class Rbac {
   public static void pushRoleBindings(MDSClient client, Collection<RoleBinding> newRoleBindings, Properties props, String token, Boolean delete)
@@ -38,90 +35,6 @@ class Rbac {
           client.deleteRoleResourcesForPrincipal(roleBinding.principal, roleBinding.role, roleBinding.scope, roleBinding.resources);
       }
     }
-  }
-  @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "_type")
-  @JsonSubTypes({
-          @JsonSubTypes.Type(value = RoleBindingKey.class, name = "RoleBinding")
-  })
-  public interface AuthJSONKey {
-
-  }
-  static class RoleBindingKey implements AuthJSONKey {
-    public String principal;
-    public String role;
-    public Map<String,Map<String,String>> scope;
-    public String toString() {
-      return new com.google.gson.Gson().toJson(this);
-    }
-  }
-  @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "_type")
-  @JsonSubTypes({
-          @JsonSubTypes.Type(value = RoleBindingValue.class, name = "RoleBinding")
-  })
-  public interface AuthJSONValue {
-
-  }
-  static class RoleBindingValue implements AuthJSONValue {
-    public ArrayList<RoleBindingResource> resources;
-    public String toString() {
-      return new com.google.gson.Gson().toJson(this);
-    }
-  }
-
-  // plain old consumer, read RoleBinding messages and compose a final list of RoleBindings
-  public static ArrayList<RoleBinding> getRolebindings(Properties props) {
-    final String authTopic = props.getProperty("auth.topic.name");
-    final Map<String, String> roleBindingMap = new HashMap<String, String>();
-    final ObjectMapper om = new ObjectMapper();
-    // from beginning and no commit
-    props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
-    props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.StringDeserializer");
-    props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.StringDeserializer");
-    props.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, false);
-    final Consumer<String, String> consumer = new KafkaConsumer<String, String>(props);
-    consumer.subscribe(Arrays.asList(authTopic));
-    try {
-      while (true) {
-        ConsumerRecords<String, String> records = consumer.poll(Duration.ofMillis(1000));
-        if (records.isEmpty()) {
-          // log end
-          break;
-        }
-        for (ConsumerRecord<String, String> record : records) {
-          if (record.value() != null) {
-            roleBindingMap.put(record.key(), record.value());
-          } else {
-            // tombstone
-            roleBindingMap.remove(record.key());
-          }
-        }
-      }
-    } finally {
-      consumer.close();
-    }
-    // map rolebindings
-    ArrayList<RoleBinding> returnList = new ArrayList<RoleBinding>();
-    for (Map.Entry<String, String> roleBinds : roleBindingMap.entrySet()) {
-      RoleBindingKey rbKey = null;
-      RoleBindingValue rbValue = null;
-      try {
-        rbKey = om.readValue(roleBinds.getKey(), RoleBindingKey.class);
-        rbValue = om.readValue(roleBinds.getValue(), RoleBindingValue.class);
-        // compose resulting list of RoleBindings
-        RoleBinding rb = new RoleBinding();
-        rb.principal = rbKey.principal;
-        rb.role = rbKey.role;
-        rb.scope = rbKey.scope;
-        rb.resources = rbValue.resources;
-        returnList.add(rb);
-      } catch (JsonMappingException e) {
-        // e.printStackTrace();
-        // expected as there are other message types in the topic
-      } catch (JsonProcessingException e) {
-        // e.printStackTrace();
-      }
-    }
-    return returnList;
   }
   public static String roleBindingsToYAML(Collection<RoleBinding> currentRoleBindings) {
     //Get current RoleBindings into a map then format as YAML
@@ -157,7 +70,7 @@ class Rbac {
       return null;
     }
     //Get current RoleBindings
-    Collection<RoleBinding> currentRoleTemp = getRolebindings(props);
+    Collection<RoleBinding> currentRoleTemp = getRolebindingsAndAcls(props).get("RoleBinding");
     // expand the resourcePatterns for easy delta evaluation
     Collection<RoleBinding> currentRoleBindings = new ArrayList<>();
     for (RoleBinding roleBinding : currentRoleTemp) {
