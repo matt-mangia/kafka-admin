@@ -159,8 +159,20 @@ public class MDSClient {
         ObjectMapper mapperObj = new ObjectMapper();
         String json = null;
         Boolean result = false;
+        AclRule aclRule = aclRules.get(0);
+        // API very sensitive to case for ENUM type fields
+        aclRule.operation = aclRule.operation.toUpperCase();
+        aclRule.permissionType = aclRule.permissionType.toUpperCase();
+        Map<String, Object> scopeMap  = new HashMap<>();
+        Map<String, Object> filterMap  = new HashMap<>();
+        resourcePattern.put("resourceType", resourcePattern.get("resourceType").toUpperCase());
+        resourcePattern.put("patternType", resourcePattern.get("patternType").toUpperCase());
+        filterMap.put("pattern", resourcePattern);
+        filterMap.put("entry", aclRule);
+        scopeMap.put("aclBinding", filterMap);
+        scopeMap.put("scope", scope);
         try {
-            json = mapperObj.writeValueAsString(scope);
+            json = mapperObj.writeValueAsString(scopeMap);
         } catch (JsonProcessingException e) {
             e.printStackTrace();
         }
@@ -188,8 +200,20 @@ public class MDSClient {
         ObjectMapper mapperObj = new ObjectMapper();
         String json = null;
         Boolean result = false;
+        AclRule aclRule = aclRules.get(0);
+        Map<String, Object> scopeMap  = new HashMap<>();
+        Map<String, Object> filterMap  = new HashMap<>();
+        // API very sensitive to case for ENUM type fields
+        aclRule.operation = aclRule.operation.toUpperCase();
+        aclRule.permissionType = aclRule.permissionType.toUpperCase();
+        resourcePattern.put("resourceType", resourcePattern.get("resourceType").toUpperCase());
+        resourcePattern.put("patternType", resourcePattern.get("patternType").toUpperCase());
+        filterMap.put("patternFilter", resourcePattern);
+        filterMap.put("entryFilter", aclRule);
+        scopeMap.put("aclBindingFilter", filterMap);
+        scopeMap.put("scope", scope);
         try {
-            json = mapperObj.writeValueAsString(scope);
+            json = mapperObj.writeValueAsString(scopeMap);
         } catch (JsonProcessingException e) {
             e.printStackTrace();
         }

@@ -57,15 +57,11 @@ class CentralizedAcl {
     }
 
     public static HashMap<String, Collection<CentralizedAclBinding>> prepareAclBindings(Properties props, JsonNode config) {
-        if (!config.hasNonNull("aclbindings")) {
-            return null;
-        }
         //Get current AclBindings
         // TODO - optimize to avoid reloading when both RB and AB is done
         Collection<CentralizedAclBinding> currentAclTemp = getRolebindingsAndAcls(props).get("AclBinding");
         // expand the resourcePatterns for easy delta evaluation
-        Collection<CentralizedAclBinding> currentAclBindings = new ArrayList<>();
-        for (CentralizedAclBinding aclBinding : currentAclTemp) {
+        Collection<CentralizedAclBinding> currentAclBindings = new ArrayList<>();for (CentralizedAclBinding aclBinding : currentAclTemp) {
             for (AclRule aclRule : aclBinding.aclRules) {
                 CentralizedAclBinding abTemp = new CentralizedAclBinding(aclBinding);
                 abTemp.aclRules = new ArrayList<>(Arrays.asList(aclRule));

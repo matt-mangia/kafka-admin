@@ -8,6 +8,7 @@ public class AclRule {
     public String permissionType;
     public String host;
     public String operation;
+
     @Override
     public boolean equals(Object obj) {
         if (obj == null) { return false; }
