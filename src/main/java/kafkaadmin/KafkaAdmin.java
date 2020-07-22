@@ -186,32 +186,33 @@ class KafkaAdmin {
         }
 
         //prepare RoleBinding lists & print RoleBinding plan here
-        HashMap<String, Collection<RoleBinding>> roleBindingLists = Rbac.prepareRoleBindings(props,config);
-        System.out.println("\n----- RoleBinding Plan -----");
-        if (roleBindingLists != null)
-            for ( String key : roleBindingLists.keySet()){
-                System.out.println("\n" + key + ":");
-                for (RoleBinding value : roleBindingLists.get(key)){
-                    System.out.println(value);
+        if (rbacProcess) {
+            HashMap<String, Collection<RoleBinding>> roleBindingLists = Rbac.prepareRoleBindings(props, config);
+            System.out.println("\n----- RoleBinding Plan -----");
+            if (roleBindingLists != null)
+                for (String key : roleBindingLists.keySet()) {
+                    System.out.println("\n" + key + ":");
+                    for (RoleBinding value : roleBindingLists.get(key)) {
+                        System.out.println(value);
+                    }
                 }
-            }
 
-        //create & delete the RoleBindings according to the plan
-        if (executeFlag) {
-            // check for systems without authorizer
-            if (roleBindingLists != null) {
-                System.out.print("\nDeleting RoleBindings...");
-                Rbac.pushRoleBindings(mdsClient, roleBindingLists.get("deleteRoleBindingsList"),props, rbacToken, Boolean.TRUE);
-                System.out.println("Done!");
+            //create & delete the RoleBindings according to the plan
+            if (executeFlag) {
+                // check for systems without authorizer
+                if (roleBindingLists != null) {
+                    System.out.print("\nDeleting RoleBindings...");
+                    Rbac.pushRoleBindings(mdsClient, roleBindingLists.get("deleteRoleBindingsList"), props, rbacToken, Boolean.TRUE);
+                    System.out.println("Done!");
 
-                System.out.print("\nCreating RoleBindings...");
-                Rbac.pushRoleBindings(mdsClient, roleBindingLists.get("createRoleBindingsList"),props, rbacToken, Boolean.FALSE);
-                System.out.println("Done!");
+                    System.out.print("\nCreating RoleBindings...");
+                    Rbac.pushRoleBindings(mdsClient, roleBindingLists.get("createRoleBindingsList"), props, rbacToken, Boolean.FALSE);
+                    System.out.println("Done!");
+                }
+            } else {
+                System.out.println("Skipping create & delete RoleBindings...use \"-execute\" to create or delete RoleBindings from the plan.");
             }
+            System.out.println("----------------------");
         }
-        else {
-            System.out.println("Skipping create & delete RoleBindings...use \"-execute\" to create or delete RoleBindings from the plan.");
-        }
-        System.out.println("----------------------");
     }
 }
