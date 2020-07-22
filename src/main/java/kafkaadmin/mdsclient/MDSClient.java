@@ -45,7 +45,7 @@ public class MDSClient {
         } catch (JsonProcessingException e) {
             e.printStackTrace();
         }
-        RequestBody body = RequestBody.create(JSON, json);
+        RequestBody body = RequestBody.create(json, JSON);
         Request request = new Request.Builder()
                 .url(baseurl+verpath+"/principals/"+principal+ "/roles/" + role)
                 .addHeader("Authorization", "Bearer " + token)
@@ -76,7 +76,7 @@ public class MDSClient {
         } catch (JsonProcessingException e) {
             e.printStackTrace();
         }
-        RequestBody body = RequestBody.create(JSON, json);
+        RequestBody body = RequestBody.create(json, JSON);
         Request request = new Request.Builder()
                 .url(baseurl+verpath+"/principals/"+principal+ "/roles/" + role + "/bindings")
                 .addHeader("Authorization", "Bearer " + token)
@@ -103,7 +103,7 @@ public class MDSClient {
         } catch (JsonProcessingException e) {
             e.printStackTrace();
         }
-        RequestBody body = RequestBody.create(JSON, json);
+        RequestBody body = RequestBody.create(json, JSON);
         Request request = new Request.Builder()
                 .url(baseurl+verpath+"/principals/"+principal+ "/roles/" + role)
                 .addHeader("Authorization", "Bearer " + token)
@@ -135,7 +135,7 @@ public class MDSClient {
         } catch (JsonProcessingException e) {
             e.printStackTrace();
         }
-        RequestBody body = RequestBody.create(JSON, json);
+        RequestBody body = RequestBody.create(json, JSON);
         Request request = new Request.Builder()
                 .url(baseurl+verpath+"/principals/"+principal+ "/roles/" + role + "/bindings")
                 .addHeader("Authorization", "Bearer " + token)
@@ -176,7 +176,7 @@ public class MDSClient {
         } catch (JsonProcessingException e) {
             e.printStackTrace();
         }
-        RequestBody body = RequestBody.create(JSON, json);
+        RequestBody body = RequestBody.create(json, JSON);
         Request request = new Request.Builder()
                 .url(baseurl+verpath+"/acls")
                 .addHeader("Authorization", "Bearer " + token)
@@ -217,7 +217,7 @@ public class MDSClient {
         } catch (JsonProcessingException e) {
             e.printStackTrace();
         }
-        RequestBody body = RequestBody.create(JSON, json);
+        RequestBody body = RequestBody.create(json, JSON);
         Request request = new Request.Builder()
                 .url(baseurl+verpath+"/acls")
                 .addHeader("Authorization", "Bearer " + token)

@@ -282,7 +282,7 @@ acls:
     host: '*'
 ```
 
-### Add/Update/Remove RoleBindings
+### Add/Update/Remove RoleBindings - Confluent Platform Only
 
 In your `config.yml` file, update the section under "rolebindings" with your complete list of rolebindings as shown in the examples below.
 Notice that for a combination of principal, role and scope you can add the resource specification as an additional item to already existing specification.
@@ -335,6 +335,48 @@ rolebindings:
         kafka-cluster: ECBwt-DmSe-WkKNg2dxdXg
 ```
 
+### Add/Update/Remove Centralized AclBindings - Confluent Platform Only
+
+In your `config.yml` file, update the section under "aclbindings" with your complete list of aclbindings as shown in the examples below.
+Notice that for a combination of a resource pattern (composed of resource type, name and type) and scope (cluster ID)  you 
+can add specific Acl rules composed of principal (User: or Group:), permission type, operation and host. 
+Correspondingly you can just remove Acl rule item and it will get deleted without impacting the rest of the Centralized Aclbinding specification.
+To find the Kafka Cluster id you can utilize Zookeeper shell ```zookeeper-shell localhost:2181 get /cluster/id```
+
+```
+aclbindings:
+  AclBinding-1:
+    resourcePattern:
+      resourceType: Topic
+      name: test
+      patternType: LITERAL
+    scope:
+      clusters:
+        kafka-cluster: ghUubZZ1R5-yc_6uhi-1pw
+    aclRules:
+      - principal: User:clienta
+        permissionType: ALLOW
+        host: '*'
+        operation: Create
+      - principal: User:clientc
+        permissionType: ALLOW
+        host: '*'
+        operation: Describe
+  AclBinding-2:
+    resourcePattern:
+      resourceType: Cluster
+      name: kafka-cluster
+      patternType: LITERAL
+    scope:
+      clusters:
+        kafka-cluster: ghUubZZ1R5-yc_6uhi-1pw
+    aclRules:
+      - principal: User:clienta
+        permissionType: ALLOW
+        host: '*'
+        operation: Describe
+```
+
 ## Build the application jar file
 
 From the project root directly, run the following:
@@ -347,29 +389,33 @@ From the project root directly, run the following:
 
 Supply your connection configuration with the "-properties" or "-p" and "-dump" options to print out current topic/ACLs/RoleBindings configuration to stdout
 Note - you need to use "-r" parameter to enable the RBAC related functionality.
+Note - you need to use "-cacl" parameter to enable the Centralized ACLs related functionality.
 
-`java -jar <path-to-jar>  -properties <path.properties> -dump -r`
+`java -jar <path-to-jar>  -properties <path.properties> -dump -r -cacl`
 
 ### Pull the configured topics, ACLs & RoleBindings from a cluster **and write to an output file**
 
 Supply your connection configuration with the "-properties" or "-p", "-dump" and "-output" or "-o" options to print out current topic/ACLs/RoleBindings configuration to a file
 Note - you need to use "-r" parameter to enable the RBAC related functionality.
+Note - you need to use "-cacl" parameter to enable the Centralized ACLs related functionality.
 
-`java -jar <path-to-jar>  -properties <path.properties> -dump -output <path-output.yml> =r`
+`java -jar <path-to-jar>  -properties <path.properties> -dump -output <path-output.yml> -r -cacl`
 
 ### Generate a Topic, ACL & RoleBindings Plan but **do not** apply any changes
 
 Supply your connection configuration with the "-properties" or "-p" option and your topic/ACL configuration with "-config" or "-c" option to generate your topic & ACL plans
 Note - you need to use "-r" parameter to enable the RBAC related functionality.
+Note - you need to use "-cacl" parameter to enable the Centralized ACLs related functionality.
 
-`java -jar <path-to-jar> -properties <path.properties> -config <path-config.yml> -r` 
+`java -jar <path-to-jar> -properties <path.properties> -config <path-config.yml> -r -cacl` 
 
 ### Generate a Topic, ACL & RoleBindings Plan, then apply the changes
 
 Supply your configuration as above & adding the "-execute" option to actually execute the plans
 Note - you need to use "-r" parameter to enable the RBAC related functionality.
+Note - you need to use "-cacl" parameter to enable the Centralized ACLs related functionality.
 
-`java -jar <path-to-jar>  -properties <path.properties> -config <path-config.yml> -execute -r`
+`java -jar <path-to-jar>  -properties <path.properties> -config <path-config.yml> -execute -r -cacl`
 
 ### Generate a Topic & ACL Plan, then apply the changes and allow delete topics operation
 
