@@ -1,7 +1,9 @@
 package kafkaadmin;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import kafkaadmin.bindingclient.BindingLoader;
 import kafkaadmin.mdsclient.MDSClient;
+import kafkaadmin.model.CentralizedAclBinding;
 import kafkaadmin.model.RoleBinding;
 import org.apache.commons.cli.*;
 import org.apache.kafka.clients.admin.AdminClient;
@@ -14,7 +16,8 @@ class KafkaAdmin {
 
     public static void main(String[] args) {
         String configFilepath = "", propsFilepath = "";
-        boolean executeFlag = false, dumpFlag = false, internalFlag = false, forceACLCleanup = true, enableDelete = false, rbacProcess = false;
+        boolean executeFlag = false, dumpFlag = false, internalFlag = false, forceACLCleanup = true,
+                enableDelete = false, rbacProcess = false, caclProcess = false;
         PrintStream configFile = System.out;
         String rbacToken = "";
 
@@ -30,7 +33,8 @@ class KafkaAdmin {
         options.addOption("internal",false,"Force Internal Topics Configuration");
         options.addOption("o", "output",true,"Output File Name For Config Dump");
         options.addOption("d", "delete",false,"Enable delete topic(s) operations");
-        options.addOption("r", "rbac",false,"Test RBAC operations");
+        options.addOption("r", "rbac",false,"Enable RBAC operations");
+        options.addOption("cacl",false,"Enable centralized Acl operations");
         try {
             commandLine = parser.parse(options, args);
 
@@ -51,6 +55,9 @@ class KafkaAdmin {
             }
             if (commandLine.hasOption("rbac")) {
                 rbacProcess = true;
+            }
+            if (commandLine.hasOption("cacl")) {
+                caclProcess = true;
             }
             if (commandLine.hasOption("execute")) {
                 if (!commandLine.hasOption("config")) {
@@ -114,9 +121,15 @@ class KafkaAdmin {
               configFile.println(Acl.aclsToYAML(aclInfo));
             if (rbacProcess) {
                 System.err.println("Existing RoleBindings...");
-                Collection<RoleBinding> roleBindingInfo = Rbac.getRolebindings(props);
+                Map<String, Collection> rbAndAcls = BindingLoader.getRolebindingsAndAcls(props);
+                Collection<RoleBinding> roleBindingInfo = rbAndAcls.get("RoleBinding");
                 if (roleBindingInfo != null)
                     configFile.println(Rbac.roleBindingsToYAML(roleBindingInfo));
+                if (caclProcess) {
+                    Collection<CentralizedAclBinding> centralizedAclBindingInfo = rbAndAcls.get("AclBinding");
+                    if (centralizedAclBindingInfo != null)
+                        configFile.println(CentralizedAcl.aclBindingsToYAML(centralizedAclBindingInfo));
+                }
             }
             System.exit(0);
         }
@@ -189,7 +202,7 @@ class KafkaAdmin {
         if (rbacProcess) {
             HashMap<String, Collection<RoleBinding>> roleBindingLists = Rbac.prepareRoleBindings(props, config);
             System.out.println("\n----- RoleBinding Plan -----");
-            if (roleBindingLists != null)
+            if (roleBindingLists != null) {
                 for (String key : roleBindingLists.keySet()) {
                     System.out.println("\n" + key + ":");
                     for (RoleBinding value : roleBindingLists.get(key)) {
@@ -197,10 +210,9 @@ class KafkaAdmin {
                     }
                 }
 
-            //create & delete the RoleBindings according to the plan
-            if (executeFlag) {
-                // check for systems without authorizer
-                if (roleBindingLists != null) {
+                //create & delete the RoleBindings according to the plan
+                if (executeFlag) {
+                    // check for systems without authorizer
                     System.out.print("\nDeleting RoleBindings...");
                     Rbac.pushRoleBindings(mdsClient, roleBindingLists.get("deleteRoleBindingsList"), props, rbacToken, Boolean.TRUE);
                     System.out.println("Done!");
@@ -208,9 +220,39 @@ class KafkaAdmin {
                     System.out.print("\nCreating RoleBindings...");
                     Rbac.pushRoleBindings(mdsClient, roleBindingLists.get("createRoleBindingsList"), props, rbacToken, Boolean.FALSE);
                     System.out.println("Done!");
+                } else {
+                    System.out.println("Skipping create & delete RoleBindings...use \"-execute\" to create or delete RoleBindings from the plan.");
                 }
-            } else {
-                System.out.println("Skipping create & delete RoleBindings...use \"-execute\" to create or delete RoleBindings from the plan.");
+            }
+            System.out.println("----------------------");
+            if (caclProcess) {
+                HashMap<String, Collection<CentralizedAclBinding>> aclBindingLists = CentralizedAcl.prepareAclBindings(props, config);
+                System.out.println("\n----- Centralized AclBinding Plan -----");
+                if (aclBindingLists != null) {
+                    for (String key : aclBindingLists.keySet()) {
+                        System.out.println("\n" + key + ":");
+                        for (CentralizedAclBinding value : aclBindingLists.get(key)) {
+                            System.out.println(value);
+                        }
+                    }
+
+                    //create & delete the RoleBindings according to the plan
+                    if (executeFlag) {
+                        System.out.print("\nDeleting Centralized AclBindings...");
+                        CentralizedAcl.pushAclBindings(mdsClient, aclBindingLists.get("deleteAclBindingsList"), props,
+                                rbacToken, Boolean.TRUE);
+                        System.out.println("Done!");
+
+                        System.out.print("\nCreating Centralized AclBindings...");
+                        CentralizedAcl.pushAclBindings(mdsClient, aclBindingLists.get("createAclBindingsList"), props,
+                                rbacToken, Boolean.FALSE);
+                        System.out.println("Done!");
+                    } else {
+                        System.out.println("Skipping create & delete Centralized AclBindings...use \"-execute\" " +
+                                "to create or delete Centralized AclBindings from the plan.");
+                    }
+                }
+                System.out.println("----------------------");
             }
             System.out.println("----------------------");
         }

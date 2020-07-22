@@ -2,6 +2,8 @@ package kafkaadmin.mdsclient;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import kafkaadmin.model.AclRule;
+import kafkaadmin.model.CentralizedAclBinding;
 import kafkaadmin.model.RoleBindingResource;
 import okhttp3.*;
 
@@ -136,6 +138,88 @@ public class MDSClient {
         RequestBody body = RequestBody.create(JSON, json);
         Request request = new Request.Builder()
                 .url(baseurl+verpath+"/principals/"+principal+ "/roles/" + role + "/bindings")
+                .addHeader("Authorization", "Bearer " + token)
+                .delete(body)
+                .build();
+        try (Response response = client.newCall(request).execute()) {
+            if (!response.isSuccessful())
+                System.err.println("Unexpected code " + response);
+            else
+                result = true;
+            System.err.println(response.code());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return result;
+    }
+
+    public Boolean addCentralizedAcls(Map<String, String> resourcePattern, Map<String, Map<String,String>> scope,
+                                      ArrayList<AclRule> aclRules)
+    {
+        ObjectMapper mapperObj = new ObjectMapper();
+        String json = null;
+        Boolean result = false;
+        AclRule aclRule = aclRules.get(0);
+        // API very sensitive to case for ENUM type fields
+        aclRule.operation = aclRule.operation.toUpperCase();
+        aclRule.permissionType = aclRule.permissionType.toUpperCase();
+        Map<String, Object> scopeMap  = new HashMap<>();
+        Map<String, Object> filterMap  = new HashMap<>();
+        resourcePattern.put("resourceType", resourcePattern.get("resourceType").toUpperCase());
+        resourcePattern.put("patternType", resourcePattern.get("patternType").toUpperCase());
+        filterMap.put("pattern", resourcePattern);
+        filterMap.put("entry", aclRule);
+        scopeMap.put("aclBinding", filterMap);
+        scopeMap.put("scope", scope);
+        try {
+            json = mapperObj.writeValueAsString(scopeMap);
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+        }
+        RequestBody body = RequestBody.create(JSON, json);
+        Request request = new Request.Builder()
+                .url(baseurl+verpath+"/acls")
+                .addHeader("Authorization", "Bearer " + token)
+                .post(body)
+                .build();
+        try (Response response = client.newCall(request).execute()) {
+            if (!response.isSuccessful())
+                System.err.println("Unexpected code " + response);
+            else
+                result = true;
+            System.err.println(response.code());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return result;
+    }
+
+    public Boolean deleteCentralizedAcls(Map<String, String> resourcePattern, Map<String, Map<String,String>> scope,
+                                         ArrayList<AclRule> aclRules)
+    {
+        ObjectMapper mapperObj = new ObjectMapper();
+        String json = null;
+        Boolean result = false;
+        AclRule aclRule = aclRules.get(0);
+        Map<String, Object> scopeMap  = new HashMap<>();
+        Map<String, Object> filterMap  = new HashMap<>();
+        // API very sensitive to case for ENUM type fields
+        aclRule.operation = aclRule.operation.toUpperCase();
+        aclRule.permissionType = aclRule.permissionType.toUpperCase();
+        resourcePattern.put("resourceType", resourcePattern.get("resourceType").toUpperCase());
+        resourcePattern.put("patternType", resourcePattern.get("patternType").toUpperCase());
+        filterMap.put("patternFilter", resourcePattern);
+        filterMap.put("entryFilter", aclRule);
+        scopeMap.put("aclBindingFilter", filterMap);
+        scopeMap.put("scope", scope);
+        try {
+            json = mapperObj.writeValueAsString(scopeMap);
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+        }
+        RequestBody body = RequestBody.create(JSON, json);
+        Request request = new Request.Builder()
+                .url(baseurl+verpath+"/acls")
                 .addHeader("Authorization", "Bearer " + token)
                 .delete(body)
                 .build();
