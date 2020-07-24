@@ -27,9 +27,8 @@ public class MDSClient {
                 .build();
         try (Response response = client.newCall(request).execute()) {
             if (!response.isSuccessful()) System.err.println("Unexpected code " + response);
-            System.err.println(response.code());
-            Map<String, List<String>> headers = response.headers().toMultimap();
-            token = headers.get("Set-Cookie").get(0).split(";")[0].replace("auth_token=","");
+            token = response.headers().get("Set-Cookie").split(";")[0].substring("auth_token=".length());
+            System.err.println(response.code() + " " + token);
         } catch (IOException e) {
             e.printStackTrace();
         }
