@@ -2,13 +2,14 @@
 Managing topics and acls at scale with Apache Kafka or Confluent Cloud can be a particularly challenging endeavor. 
 Kafka Admin was originally created to help address this challenge, particularly with managing ACLs for multi-tenant Kafka clusters. 
 Kafka Admin leverages the AdminClient APIs of Apache Kafka to programmatically create topics, as well as add/modify/delete ACLs, from an input configuration file (YAML). 
+Kafka Admin leverages the Metadata Service APIs of Confluent Server to programmatically to add/modify/delete rolebindings, from an input configuration file (YAML). 
 
-Once the jar is compiled, using the application is as simple as supplying cluster configuration from a properties file and providing a topic/ACL YAML configuration. 
-If you already have an active cluster with topics and ACLs configured, you can use Kafka-Admin with the `dump` flag to output the cluster's configuration file (YAML). 
+Once the jar is compiled, using the application is as simple as supplying cluster configuration from a properties file and providing a topic/ACL/Rolebindings YAML configuration. 
+If you already have an active cluster with topics, ACLs and RoleBindings configured, you can use Kafka-Admin with the `dump` flag to output the cluster's configuration file (YAML). 
 
 Some of the use cases that have arisen which can leverage Kafka-Admin include:
-* Managing ACLs & Topics at scale with source controlled configurations
-* Migrating ACLs &/or Topics from one cluster to another by combining the `pull` mechanism of Kafka-Admin against the source cluster and applying the resulting output to the target cluster.
+* Managing RoleBindings, ACLs & Topics at scale with source controlled configurations
+* Migrating RoleBindings, ACLs &/or Topics from one cluster to another by combining the `pull` mechanism of Kafka-Admin against the source cluster and applying the resulting output to the target cluster.
 * Automating ACLs & Topics with Confluent Cloud (otherwise requires using non-scriptable CLI)
 
 ## Using Kafka-Admin  
@@ -56,14 +57,20 @@ topics:
 You can choose to leave the additional configurations for a topic blank (and defaults will be used), or you can enter them as well under the desired topic. 
 It is important to note that the **additional configuration values must be entered as strings (wrapped in double quotes)** or they will cause an error to the application. 
 
+### Delete Topics
+
 If you are you using delete topics (default is disabled), you will need to make sure all topics that exist on the cluster are in your "topics" section or exist in the "default_topics" section, as shown here:
 
 ```
 default_topics:
-  - _confluent-metrics
-  - __confluent.support.metrics
+  - my_topic_do_not_delete
+  - this_stays_too
+  - ^{1,2}_confluent-.*
+  - ^connect-cluster-.*
 ```
 
+All (truly) internal topics are ignored by the delete process, for the rest use a list or regex pattern as shown above.
+All topic delete operations must be explicitly enabled using `delete` flag (-d).
 If you're not using delete topics, then you do not need to worry about using the "default_topics" section. 
 
 #### Increasing Topic Partitions
@@ -275,6 +282,101 @@ acls:
     host: '*'
 ```
 
+### Add/Update/Remove RoleBindings - Confluent Platform Only
+
+In your `config.yml` file, update the section under "rolebindings" with your complete list of rolebindings as shown in the examples below.
+Notice that for a combination of principal, role and scope you can add the resource specification as an additional item to already existing specification.
+Correspondingly you can just remove resourceType item and it will get deleted without impacting the rest of the rolebinding specification.
+To find the Kafka Cluster id you can utilize Zookeeper shell ```zookeeper-shell localhost:2181 get /cluster/id```
+
+```
+rolebindings:
+  RoleBinding-22:
+    principal: User:clientc
+    role: DeveloperRead
+    resource:
+      - resourceType: Connector
+        name: datagen-pageviews
+        patternType: LITERAL
+    scope:
+      clusters:
+        kafka-cluster: ECBwt-DmSe-WkKNg2dxdXg
+        connect-cluster: connect-cluster
+  RoleBinding-24:
+    principal: User:connect
+    role: ResourceOwner
+    resource:
+      - resourceType: Topic
+        name: connect-configs
+        patternType: LITERAL
+      - resourceType: Topic
+        name: connect-statuses
+        patternType: LITERAL
+      - resourceType: Group
+        name: connect-cluster
+        patternType: LITERAL
+      - resourceType: Group
+        name: secret-registry
+        patternType: LITERAL
+      - resourceType: Topic
+        name: connect-offsets
+        patternType: LITERAL
+      - resourceType: Topic
+        name: _confluent-secrets
+        patternType: LITERAL
+    scope:
+      clusters:
+        kafka-cluster: ECBwt-DmSe-WkKNg2dxdXg
+  RoleBinding-25:
+    principal: User:MySystemAdmin
+    role: SystemAdmin
+    scope:
+      clusters:
+        kafka-cluster: ECBwt-DmSe-WkKNg2dxdXg
+```
+
+### Add/Update/Remove Centralized AclBindings - Confluent Platform Only
+
+In your `config.yml` file, update the section under "aclbindings" with your complete list of aclbindings as shown in the examples below.
+Notice that for a combination of a resource pattern (composed of resource type, name and type) and scope (cluster ID)  you 
+can add specific Acl rules composed of principal (User: or Group:), permission type, operation and host. 
+Correspondingly you can just remove Acl rule item and it will get deleted without impacting the rest of the Centralized Aclbinding specification.
+To find the Kafka Cluster id you can utilize Zookeeper shell ```zookeeper-shell localhost:2181 get /cluster/id```
+
+```
+aclbindings:
+  AclBinding-1:
+    resourcePattern:
+      resourceType: Topic
+      name: test
+      patternType: LITERAL
+    scope:
+      clusters:
+        kafka-cluster: ghUubZZ1R5-yc_6uhi-1pw
+    aclRules:
+      - principal: User:clienta
+        permissionType: ALLOW
+        host: '*'
+        operation: Create
+      - principal: User:clientc
+        permissionType: ALLOW
+        host: '*'
+        operation: Describe
+  AclBinding-2:
+    resourcePattern:
+      resourceType: Cluster
+      name: kafka-cluster
+      patternType: LITERAL
+    scope:
+      clusters:
+        kafka-cluster: ghUubZZ1R5-yc_6uhi-1pw
+    aclRules:
+      - principal: User:clienta
+        permissionType: ALLOW
+        host: '*'
+        operation: Describe
+```
+
 ## Build the application jar file
 
 From the project root directly, run the following:
@@ -283,26 +385,40 @@ From the project root directly, run the following:
 
 ## Run the Jar
 
-### Pull the configured topics & ACLs from a cluster **and print to stdout**
+### Pull the configured topics, ACLs & RoleBindings from a cluster **and print to stdout**
 
-Supply your connection configuration with the "-properties" or "-p" and "-dump" options to print out current topic/ACLs configuration to stdout
+Supply your connection configuration with the "-properties" or "-p" and "-dump" options to print out current topic/ACLs/RoleBindings configuration to stdout
+Note - you need to use "-r" parameter to enable the RBAC related functionality.
+Note - you need to use "-cacl" parameter to enable the Centralized ACLs related functionality.
 
-`java -jar <path-to-jar>  -properties <path.properties> -dump`
+`java -jar <path-to-jar>  -properties <path.properties> -dump -r -cacl`
 
-### Pull the configured topics & ACLs from a cluster **and write to an output file**
+### Pull the configured topics, ACLs & RoleBindings from a cluster **and write to an output file**
 
-Supply your connection configuration with the "-properties" or "-p", "-dump" and "-output" or "-o" options to print out current topic/ACLs configuration to a file
+Supply your connection configuration with the "-properties" or "-p", "-dump" and "-output" or "-o" options to print out current topic/ACLs/RoleBindings configuration to a file
+Note - you need to use "-r" parameter to enable the RBAC related functionality.
+Note - you need to use "-cacl" parameter to enable the Centralized ACLs related functionality.
 
-`java -jar <path-to-jar>  -properties <path.properties> -dump -output <path-output.yml>`
+`java -jar <path-to-jar>  -properties <path.properties> -dump -output <path-output.yml> -r -cacl`
 
-### Generate a Topic & ACL Plan but **do not** apply any changes
+### Generate a Topic, ACL & RoleBindings Plan but **do not** apply any changes
 
 Supply your connection configuration with the "-properties" or "-p" option and your topic/ACL configuration with "-config" or "-c" option to generate your topic & ACL plans
+Note - you need to use "-r" parameter to enable the RBAC related functionality.
+Note - you need to use "-cacl" parameter to enable the Centralized ACLs related functionality.
 
-`java -jar <path-to-jar> -properties <path.properties> -config <path-config.yml>` 
+`java -jar <path-to-jar> -properties <path.properties> -config <path-config.yml> -r -cacl` 
 
-### Generate a Topic & ACL Plan, then apply the changes
+### Generate a Topic, ACL & RoleBindings Plan, then apply the changes
 
 Supply your configuration as above & adding the "-execute" option to actually execute the plans
+Note - you need to use "-r" parameter to enable the RBAC related functionality.
+Note - you need to use "-cacl" parameter to enable the Centralized ACLs related functionality.
 
-`java -jar <path-to-jar>  -properties <path.properties> -config <path-config.yml> -execute`
+`java -jar <path-to-jar>  -properties <path.properties> -config <path-config.yml> -execute -r -cacl`
+
+### Generate a Topic & ACL Plan, then apply the changes and allow delete topics operation
+
+Supply your configuration as above & adding the "-execute -delete" options to actually execute the plans including the delete operation
+
+`java -jar <path-to-jar>  -properties <path.properties> -config <path-config.yml> -execute -delete`

@@ -1,0 +1,6 @@
+bootstrap.servers=devlap:9093
+mds.url=http://devlap:8090
+mds.user=mds
+mds.password=mds1
+group.id = test
+auth.topic.name = _confluent-metadata-auth

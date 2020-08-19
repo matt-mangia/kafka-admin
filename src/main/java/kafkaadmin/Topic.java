@@ -10,6 +10,9 @@ import org.apache.kafka.common.config.ConfigResource;
 
 import java.util.*;
 import java.util.concurrent.ExecutionException;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 class Topic {
 
@@ -124,9 +127,23 @@ class Topic {
             }
 
             //Determine topics to remove
-            //Commenting out -- all topic deletion will be done manually
-            //Set<String> removeTopics = new HashSet<>(currentTopics);
-            //removeTopics.removeAll(configuredTopics);
+            Set<String> removeTopics = new HashSet<>(currentTopics);
+            removeTopics.removeAll(configuredTopics);
+
+            // Protect default topics
+            if (config.has("default_topics")) {
+                // build regex & compare
+                String pattern = StreamSupport.stream(config.get("default_topics").spliterator(), false).
+                                    map(jn->jn.asText()).
+                                    collect(Collectors.joining("|"));
+                if (pattern.length() > 0) {
+                    Pattern p = Pattern.compile(pattern);
+                    removeTopics = removeTopics.
+                                        stream().
+                                        filter(item -> !p.matcher(item).matches()).
+                                        collect(Collectors.toSet());
+                }
+            }
 
             //Determine topics to add
             Set<String> addTopics = new HashSet<>(configuredTopics);
@@ -135,8 +152,7 @@ class Topic {
             HashMap<String,Set<String>> topicPlan = new HashMap<>();
             topicPlan.put("createTopicList", addTopics);
             topicPlan.put("increasePartitionList", increasePartitions);
-            //Commenting out deleteTopicList -- all topic deletion will be done manually
-            //topicPlan.put("deleteTopicList", removeTopics);
+            topicPlan.put("deleteTopicList", removeTopics);
 
             return topicPlan;
         } catch (InterruptedException | ExecutionException e) {
