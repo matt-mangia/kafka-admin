@@ -67,6 +67,7 @@ public class BindingLoader {
         if (cacheMap != null)
             return cacheMap;
         final String authTopic = props.getProperty("auth.topic.name", "_confluent-metadata-auth");
+        final Long pollTimeout = Long.parseLong(props.getProperty("poll.timeout.ms","10000"));
         final Map<String, String> consumerBindingMap = new HashMap<String, String>();
         final Map<String, String> roleBindingMap = new HashMap<String, String>();
         final Map<String, String> aclBindingMap = new HashMap<String, String>();
@@ -83,7 +84,7 @@ public class BindingLoader {
         Pattern pattern = Pattern.compile("^\\{\\\"_type\\\":\\\"(\\w+)\\\".*");
         try {
             while (true) {
-                ConsumerRecords<String, String> records = consumer.poll(Duration.ofMillis(1000));
+                ConsumerRecords<String, String> records = consumer.poll(Duration.ofMillis(pollTimeout));
                 if (records.isEmpty()) {
                     // log end
                     break;
