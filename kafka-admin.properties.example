@@ -1,8 +1,21 @@
-bootstrap.servers: ikafka:9092
-security.protocol: SSL
-ssl.truststore.location: client.truststore.jks
-ssl.truststore.password: password
-ssl.keystore.location: client.keystore.jks
-ssl.keystore.password: password
-ssl.key.password: password
+###########  Client Connection properties  ###########
 
+bootstrap.servers = ikafka:9092
+security.protocol = SSL
+ssl.truststore.location = client.truststore.jks
+ssl.truststore.password = password
+ssl.keystore.location = client.keystore.jks
+ssl.keystore.password = password
+ssl.key.password = password
+
+###########  Confluent Metadata Server properties  ###########
+
+mds.url=http://devlap:8090
+mds.user=mds
+mds.password=mds1
+auth.topic.name = _confluent-metadata-auth
+
+###########  Auth Consumer properties  ###########
+
+group.id = test
+poll.timeout.ms = 10000

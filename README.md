@@ -287,7 +287,8 @@ acls:
 In your `config.yml` file, update the section under "rolebindings" with your complete list of rolebindings as shown in the examples below.
 Notice that for a combination of principal, role and scope you can add the resource specification as an additional item to already existing specification.
 Correspondingly you can just remove resourceType item and it will get deleted without impacting the rest of the rolebinding specification.
-To find the Kafka Cluster id you can utilize Zookeeper shell ```zookeeper-shell localhost:2181 get /cluster/id```
+
+To find the Kafka Cluster id, you can utilize Zookeeper shell ```zookeeper-shell localhost:2181 get /cluster/id```
 
 ```
 rolebindings:
@@ -339,8 +340,9 @@ rolebindings:
 
 In your `config.yml` file, update the section under "aclbindings" with your complete list of aclbindings as shown in the examples below.
 Notice that for a combination of a resource pattern (composed of resource type, name and type) and scope (cluster ID)  you 
-can add specific Acl rules composed of principal (User: or Group:), permission type, operation and host. 
+can add specific Acl rules composed of principal (`User:` or `Group:`), permission type, operation and host. 
 Correspondingly you can just remove Acl rule item and it will get deleted without impacting the rest of the Centralized Aclbinding specification.
+
 To find the Kafka Cluster id you can utilize Zookeeper shell ```zookeeper-shell localhost:2181 get /cluster/id```
 
 ```
@@ -387,33 +389,37 @@ From the project root directly, run the following:
 
 ### Pull the configured topics, ACLs & RoleBindings from a cluster **and print to stdout**
 
-Supply your connection configuration with the "-properties" or "-p" and "-dump" options to print out current topic/ACLs/RoleBindings configuration to stdout
-Note - you need to use "-r" parameter to enable the RBAC related functionality.
-Note - you need to use "-cacl" parameter to enable the Centralized ACLs related functionality.
+Supply your connection configuration with the "-properties" or "-p" and "-dump" options to print out current topic/ACLs/RoleBindings configuration to stdout.
+
+*Note: Use the "-r" parameter to enable Confluent RBAC related functionality. 
+Use the "-cacl" parameter to enable Confluent Centralized ACLs related functionality.*
 
 `java -jar <path-to-jar>  -properties <path.properties> -dump -r -cacl`
 
 ### Pull the configured topics, ACLs & RoleBindings from a cluster **and write to an output file**
 
 Supply your connection configuration with the "-properties" or "-p", "-dump" and "-output" or "-o" options to print out current topic/ACLs/RoleBindings configuration to a file
-Note - you need to use "-r" parameter to enable the RBAC related functionality.
-Note - you need to use "-cacl" parameter to enable the Centralized ACLs related functionality.
+
+*Note: Use the "-r" parameter to enable Confluent RBAC related functionality. 
+Use the "-cacl" parameter to enable Confluent Centralized ACLs related functionality.*
 
 `java -jar <path-to-jar>  -properties <path.properties> -dump -output <path-output.yml> -r -cacl`
 
 ### Generate a Topic, ACL & RoleBindings Plan but **do not** apply any changes
 
 Supply your connection configuration with the "-properties" or "-p" option and your topic/ACL configuration with "-config" or "-c" option to generate your topic & ACL plans
-Note - you need to use "-r" parameter to enable the RBAC related functionality.
-Note - you need to use "-cacl" parameter to enable the Centralized ACLs related functionality.
+
+*Note: Use the "-r" parameter to enable Confluent RBAC related functionality. 
+Use the "-cacl" parameter to enable Confluent Centralized ACLs related functionality.*
 
 `java -jar <path-to-jar> -properties <path.properties> -config <path-config.yml> -r -cacl` 
 
 ### Generate a Topic, ACL & RoleBindings Plan, then apply the changes
 
 Supply your configuration as above & adding the "-execute" option to actually execute the plans
-Note - you need to use "-r" parameter to enable the RBAC related functionality.
-Note - you need to use "-cacl" parameter to enable the Centralized ACLs related functionality.
+
+*Note: Use the "-r" parameter to enable Confluent RBAC related functionality. 
+Use the "-cacl" parameter to enable Confluent Centralized ACLs related functionality.*
 
 `java -jar <path-to-jar>  -properties <path.properties> -config <path-config.yml> -execute -r -cacl`
 
@@ -422,3 +428,43 @@ Note - you need to use "-cacl" parameter to enable the Centralized ACLs related 
 Supply your configuration as above & adding the "-execute -delete" options to actually execute the plans including the delete operation
 
 `java -jar <path-to-jar>  -properties <path.properties> -config <path-config.yml> -execute -delete`
+
+*Note: Use the "-r" parameter to enable Confluent RBAC related functionality. 
+Use the "-cacl" parameter to enable Confluent Centralized ACLs related functionality.*
+
+## Troubleshooting FAQs
+
+#### I am getting an error with my certificates: `"unable to find valid certification path to requested target"`
+
+This error is especially common with RBAC implementations. 
+The tool will look for certs in the standard location: `/etc/ssl/certs/java/cacerts` and will fail if the cert isn't found there.
+Try specifying the truststore (and/or keystores) adding the following:
+
+`-Djavax.net.debug=all -Djavax.net.ssl.trustStore=<path to truststore> -Djavax.net.ssl.trustStorePassword=<password>`
+
+Example:
+
+`java -Djavax.net.ssl.trustStore=xxxx & -Djavax.net.ssl.trustStorePassword=xxx -jar <path-to-jar> -properties <path.properties> -config <path-config.yml> -dump -r -cacl`
+
+#### How long should the tool take to run?
+
+The tool can run in as few as a few seconds, to a few minutes, depending on your cluster configurations. 
+For Apache Kafka ACLs, the tool should run relatively quick and has been successfully tested with 1000+ ACL configurations. 
+For Confluent Rolebindings and Centralized ACLs, the tool will reset its offset to read (from beginning) the entire `_confluent-metadata-auth` topic. 
+As such, if your cluster has a moderate (or more!) amount of Rolebindings or Centralized ACLs already configured, it will take longer to run. 
+If you encounter issues with the tool not returning or updating rolebindings, you may need to increase the `poll.timeout.ms` configuration in your properties file. 
+
+The tool defaults the consumer poll timeout (`poll.timeout.ms` in config.yml) for RBAC & Centralized ACLs to 10 seconds and will likely need to be increased if you have more than a few dozen rolebindings configured.
+A good way to determine how long you need to set this timeout is to use a console consumer to read the `_confluent-metadata-auth` topic from the beginning.
+It is recommended that you set the timeout configuration to at least 25% higher than the amount of time the console consumer takes.
+
+#### Does the tool need any permissions (Kafka ACLs, Confluent Rolebindings or Centralized ACLs)?
+
+Yes, the easiest solution is to run this tool as a `SuperUser` for the cluster because it is configuring topics and ACLs/Rolebindings. 
+Otherwise, the user specified in the configuration needs the following capabilities:figuration will need the following:
+
+- Permission to create / read / modify / delete ALL topics (if using topic management)
+- Permission to create / delete ACLs (if using Apache Kafka ACLs)
+- Permission to create / delete / modify Confluent Centralized ACLs (if CACL used)
+- Permission to create / delete / modify Confluent Rolebindings (if RBAC used)
+- Read permission on the Confluent Metadata Auth topic (if RBAC/CACLs used, default: `_confluent-metadata-auth`)
